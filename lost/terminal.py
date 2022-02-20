@@ -10,7 +10,7 @@ class State(Enum):
     ENTER_END_OF_WORK_DETAILS = 3
 
 
-class Model:
+class Terminal:
     """
     This class represents a terminal, modeling its complete internal state.
 

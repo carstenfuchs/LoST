@@ -4,7 +4,7 @@ from tkinter import font
 from tkinter import ttk
 
 from frames import WelcomeFrame, ArbeitsanfangFrame, ArbeitsendeFrame
-from terminal import Model, State
+from terminal import Terminal, State
 
 
 class RootWindow(Tk):
@@ -23,25 +23,25 @@ class RootWindow(Tk):
         self.frame_Arbeitsende = ArbeitsendeFrame(self)
         self.active_frame = None
 
-        self.model = None
+        self.terminal = None
         self.drive_terminal_clock()
 
     def drive_terminal_clock(self):
-        if self.model is not None:
-            self.model.process_clocktick()
+        if self.terminal is not None:
+            self.terminal.process_clocktick()
         self.after(500, self.drive_terminal_clock)
 
-    def update_to_model(self, model):
+    def update_to_model(self, terminal):
         #print("update_to_model")
-        #print(f"{model.state = }")
+        #print(f"{terminal.state = }")
         next_frame = self.frame_Welcome
-        if model.state == State.ENTER_START_OF_WORK_DETAILS:
+        if terminal.state == State.ENTER_START_OF_WORK_DETAILS:
             next_frame = self.frame_Arbeitsanfang
-        elif model.state == State.ENTER_END_OF_WORK_DETAILS:
+        elif terminal.state == State.ENTER_END_OF_WORK_DETAILS:
             next_frame = self.frame_Arbeitsende
 
         if hasattr(next_frame, "update_to_model"):
-            next_frame.update_to_model(model)
+            next_frame.update_to_model(terminal)
 
         if self.active_frame == next_frame:
             return
@@ -56,13 +56,13 @@ class RootWindow(Tk):
 
 root_window = RootWindow()
 
-model = Model(root_window)
-model.notify_observers()
+terminal = Terminal(root_window)
+terminal.notify_observers()
 
-# The root window needs to know the model so that event handlers can access it
+# The root window needs to know the terminal so that event handlers can access it
 # in order to implement the effects of the handled events.
-# (The model in turn will notify its observers about its changed state.)
-root_window.model = model
+# (The terminal in turn will notify its observers about its changed state.)
+root_window.terminal = terminal
 
 # print(font.names())
 # for n in font.names():
@@ -73,5 +73,5 @@ root_window.model = model
 root_window.mainloop()
 
 # It's not really necessary here, but let's explicitly reset the root window's
-# reference to the model in order to break the circular dependency.
-root_window.model = None
+# reference to the terminal in order to break the circular dependency.
+root_window.terminal = None

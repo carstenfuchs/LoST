@@ -34,7 +34,7 @@ class TitleBar(Frame):
             self.update_clock()
 
     def on_LMB_click(self, event):
-        self.winfo_toplevel().model.set_state(State.WELCOME)
+        self.winfo_toplevel().terminal.set_state(State.WELCOME)
 
     def update_clock(self):
         self.clock.config(text=datetime.now().strftime("%H:%M"))
@@ -94,10 +94,10 @@ class WelcomeFrame(Frame):
         self.update_clock()
 
     def on_click_Arbeitsanfang(self):
-        self.winfo_toplevel().model.set_state(State.ENTER_START_OF_WORK_DETAILS)
+        self.winfo_toplevel().terminal.set_state(State.ENTER_START_OF_WORK_DETAILS)
 
     def on_click_Arbeitsende(self):
-        self.winfo_toplevel().model.set_state(State.ENTER_END_OF_WORK_DETAILS)
+        self.winfo_toplevel().terminal.set_state(State.ENTER_END_OF_WORK_DETAILS)
 
     def update_clock(self):
         now = datetime.now()
@@ -152,27 +152,27 @@ class ArbeitsanfangFrame(Frame):
             # set debug colors
             pass
 
-    def update_to_model(self, model):
+    def update_to_model(self, terminal):
         active_col = '#66CCFF'
         inactive_col = '#666666'
 
         self.schicht_button.config(
-            background=active_col if model.sow_type == 'schicht' else inactive_col,
-            activebackground=active_col if model.sow_type == 'schicht' else inactive_col,   # mouse hover color
+            background=active_col if terminal.sow_type == 'schicht' else inactive_col,
+            activebackground=active_col if terminal.sow_type == 'schicht' else inactive_col,   # mouse hover color
           # highlightbackground='red',      # used as base color for the border?
         )
 
         self.jetzt_button.config(
-            background=active_col if model.sow_type == 'jetzt' else inactive_col,
-            activebackground=active_col if model.sow_type == 'jetzt' else inactive_col,   # mouse hover color
+            background=active_col if terminal.sow_type == 'jetzt' else inactive_col,
+            activebackground=active_col if terminal.sow_type == 'jetzt' else inactive_col,   # mouse hover color
           # highlightbackground='red',      # used as base color for the border?
         )
 
     def on_click_Anfang_Jetzt(self):
-        self.winfo_toplevel().model.set_sow_type('jetzt')
+        self.winfo_toplevel().terminal.set_sow_type('jetzt')
 
     def on_click_Anfang_Schicht(self):
-        self.winfo_toplevel().model.set_sow_type('schicht')
+        self.winfo_toplevel().terminal.set_sow_type('schicht')
 
 
 class DepartmentButtonsGrid(Frame):
@@ -208,10 +208,10 @@ class DepartmentButtonsGrid(Frame):
                 btn.bind('<Button-1>', self.on_LMB_click)
                 self.buttons.append(btn)
 
-    def update_to_model(self, model):
+    def update_to_model(self, terminal):
         active_col = '#66CCFF'
         inactive_col = '#666666'
-        dept_str = model.department
+        dept_str = terminal.department
 
         for btn in self.buttons:
             btn.config(
@@ -222,7 +222,7 @@ class DepartmentButtonsGrid(Frame):
 
     def on_LMB_click(self, event):
         text = event.widget.cget('text')
-        mdl = self.winfo_toplevel().model
+        mdl = self.winfo_toplevel().terminal
         mdl.set_department(None if text == mdl.department else text)
 
 
@@ -244,13 +244,13 @@ class PauseButtonsRow(Frame):
             btn.grid(row=0, column=nr, sticky="NESW")
             btn.bind('<Button-1>', self.on_LMB_click)
 
-    def update_to_model(self, model):
+    def update_to_model(self, terminal):
         active_col = '#66CCFF'
         inactive_col = '#666666'
 
         p_str = ''
-        if model.pause is not None:
-            p_str = f"{model.pause // 60}:{model.pause % 60:02}"
+        if terminal.pause is not None:
+            p_str = f"{terminal.pause // 60}:{terminal.pause % 60:02}"
 
         for btn in self.buttons:
             btn.config(
@@ -261,7 +261,7 @@ class PauseButtonsRow(Frame):
 
     def on_LMB_click(self, event):
         text = event.widget.cget('text')
-        mdl_pause = self.winfo_toplevel().model.pause
+        mdl_pause = self.winfo_toplevel().terminal.pause
 
         if text == '+15':
             if mdl_pause is None:
@@ -272,7 +272,7 @@ class PauseButtonsRow(Frame):
             p = int(text[:-3])*60 + int(text[-2:])
             mdl_pause = None if mdl_pause == p else p
 
-        self.winfo_toplevel().model.set_pause(mdl_pause)
+        self.winfo_toplevel().terminal.set_pause(mdl_pause)
 
 
 class ArbeitsendeFrame(Frame):
@@ -318,20 +318,20 @@ class ArbeitsendeFrame(Frame):
             # set debug colors
             pass
 
-    def update_to_model(self, model):
+    def update_to_model(self, terminal):
         dept_str = "Bereich"
-        if model.department is not None:
-            dept_str += f" {model.department}"
+        if terminal.department is not None:
+            dept_str += f" {terminal.department}"
 
         self.dept_label.config(text=dept_str)
-        self.dept_grid.update_to_model(model)
+        self.dept_grid.update_to_model(terminal)
 
         p_str = "Pause"
-        if model.pause is not None:
-            p_str += f" {model.pause // 60}:{model.pause % 60:02}"
+        if terminal.pause is not None:
+            p_str += f" {terminal.pause // 60}:{terminal.pause % 60:02}"
 
         self.pause_label.config(text=p_str)
-        self.pause_buttons.update_to_model(model)
+        self.pause_buttons.update_to_model(terminal)
 
 
 class SendingFrame(Frame):
