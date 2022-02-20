@@ -17,13 +17,18 @@ class RootWindow(Tk):
         if True:  # if localconfig.quit_with_ESC:
             self.bind('<Escape>', lambda x: self.destroy())
 
-        # top_bar = TopBar(self)
-        # top_bar.pack(fill=X)
-
         self.frame_Welcome = WelcomeFrame(self)
         self.frame_Arbeitsanfang = ArbeitsanfangFrame(self)
         self.frame_Arbeitsende = ArbeitsendeFrame(self)
         self.active_frame = None
+
+        self.model = None
+        self.drive_terminal_clock()
+
+    def drive_terminal_clock(self):
+        if self.model is not None:
+            self.model.process_clocktick()
+        self.after(500, self.drive_terminal_clock)
 
     def update_to_model(self, model):
         #print("update_to_model")

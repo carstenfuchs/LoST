@@ -1,4 +1,5 @@
 from enum import Enum
+import time
 
 
 class State(Enum):
@@ -12,37 +13,57 @@ class State(Enum):
 class Model:
     """
     This class represents a terminal, modeling its complete internal state.
+
     In the MVC pattern, this is the model.
+    It must deal with many types and sources of input: events from the GUI,
+    the RFID reader, incoming network messages, timers, special hardware (e.g.
+    from the RPi's GPIO pins), etc.
+    (In a sense, the model is itself a listener to input event providers.)
     """
 
     def __init__(self, root_window):
+        # Note that we should properly employ the Observer pattern rather than
+        # taking the `root_window` here: The terminal model might have a lot
+        # more observers than only that, e.g. LED lights on the RPi or the RFID
+        # reader, audio outputs, door openers, etc.
         self.root_window = root_window
         self.is_updating = False
+        self._set_state(State.WELCOME)
+        self.time_last_action = time.time()
 
-        self.state = State.WELCOME
+    def _set_state(self, state):
+        self.state = state
         self.sow_type = None
         self.department = None
         self.pause = None
 
     def set_state(self, state):
-        self.state = state
-        self.sow_type = None
-        self.department = None
-        self.pause = None
+        self._set_state(state)
+        self.time_last_action = time.time()
         self.notify_observers()
 
     def set_sow_type(self, sow):
         assert sow in (None, 'schicht', 'jetzt')
         self.sow_type  = sow
+        self.time_last_action = time.time()
         self.notify_observers()
 
     def set_department(self, dept):
         self.department = dept
+        self.time_last_action = time.time()
         self.notify_observers()
 
     def set_pause(self, pause):
         self.pause = pause
+        self.time_last_action = time.time()
         self.notify_observers()
+
+    def process_clocktick(self):
+        time_idle = time.time() - self.time_last_action
+        if time_idle > 30.0:
+            self._set_state(State.WELCOME)
+            self.time_last_action = time.time()
+            self.notify_observers()
 
     def notify_observers(self):
         # Make sure that we don't accidentally enter infinite recursion.
