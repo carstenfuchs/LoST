@@ -1,8 +1,8 @@
 from enum import Enum
 
 
-class Intention(Enum):
-    """The overall intention for which the terminal is used."""
+class State(Enum):
+    """The basic states that a terminal can enter."""
 
     WELCOME = 1
     ENTER_START_OF_WORK_DETAILS = 2
@@ -10,18 +10,22 @@ class Intention(Enum):
 
 
 class Model:
+    """
+    This class represents a terminal, modeling its complete internal state.
+    In the MVC pattern, this is the model.
+    """
 
     def __init__(self, root_window):
         self.root_window = root_window
         self.is_updating = False
 
-        self.intention = Intention.WELCOME
+        self.state = State.WELCOME
         self.sow_type = None
         self.department = None
         self.pause = None
 
-    def set_intention(self, intention):
-        self.intention = intention
+    def set_state(self, state):
+        self.state = state
         self.sow_type = None
         self.department = None
         self.pause = None

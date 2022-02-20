@@ -3,7 +3,7 @@ from tkinter import *
 from tkinter import font
 from tkinter import ttk
 from frames import TopBar, WelcomeFrame, ArbeitsanfangFrame, ArbeitsendeFrame
-from model import Model, Intention
+from model import Model, State
 
 
 class RootWindow(Tk):
@@ -27,11 +27,11 @@ class RootWindow(Tk):
 
     def update_to_model(self, model):
         #print("update_to_model")
-        #print(f"{model.intention = }")
+        #print(f"{model.state = }")
         next_frame = self.frame_Welcome
-        if model.intention == Intention.ENTER_START_OF_WORK_DETAILS:
+        if model.state == State.ENTER_START_OF_WORK_DETAILS:
             next_frame = self.frame_Arbeitsanfang
-        elif model.intention == Intention.ENTER_END_OF_WORK_DETAILS:
+        elif model.state == State.ENTER_END_OF_WORK_DETAILS:
             next_frame = self.frame_Arbeitsende
 
         if hasattr(next_frame, "update_to_model"):
@@ -54,7 +54,7 @@ model = Model(root_window)
 model.notify_observers()
 
 # The root window needs to know the model so that event handlers can access it
-# in order to implement the effects of the event.
+# in order to implement the effects of the handled events.
 # (The model in turn will notify its observers about its changed state.)
 root_window.model = model
 

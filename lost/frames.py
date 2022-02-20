@@ -2,7 +2,7 @@ from babel.dates import format_datetime
 from datetime import datetime
 from tkinter import *
 from tkinter import ttk
-from model import Intention
+from model import State
 
 
 class TopBar(Frame):
@@ -34,7 +34,7 @@ class TopBar(Frame):
             self.update_clock()
 
     def on_LMB_click(self, event):
-        self.winfo_toplevel().model.set_intention(Intention.WELCOME)
+        self.winfo_toplevel().model.set_state(State.WELCOME)
 
     def update_clock(self):
         self.clock.config(text=datetime.now().strftime("%H:%M"))
@@ -94,10 +94,10 @@ class WelcomeFrame(Frame):
         self.update_clock()
 
     def on_click_Arbeitsanfang(self):
-        self.winfo_toplevel().model.set_intention(Intention.ENTER_START_OF_WORK_DETAILS)
+        self.winfo_toplevel().model.set_state(State.ENTER_START_OF_WORK_DETAILS)
 
     def on_click_Arbeitsende(self):
-        self.winfo_toplevel().model.set_intention(Intention.ENTER_END_OF_WORK_DETAILS)
+        self.winfo_toplevel().model.set_state(State.ENTER_END_OF_WORK_DETAILS)
 
     def update_clock(self):
         now = datetime.now()
