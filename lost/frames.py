@@ -2,10 +2,10 @@ from babel.dates import format_datetime
 from datetime import datetime
 from tkinter import *
 from tkinter import ttk
-from model import State
+from terminal import State
 
 
-class TopBar(Frame):
+class TitleBar(Frame):
 
     def __init__(self, parent, show_clock=True, *args, **kwargs):
         super().__init__(parent, *args, **kwargs, relief=RAISED, borderwidth=1)   #, background="#CCCCCC")
@@ -58,7 +58,7 @@ class WelcomeFrame(Frame):
         # (instead of only the minimal width to enclose its children).
         self.columnconfigure(0, weight=1)
 
-        title_bar = TopBar(self, show_clock=False)
+        title_bar = TitleBar(self, show_clock=False)
         title_bar.grid(row=0, column=0, sticky="NESW")
 
         self.time_label = Label(self, text="", background="#66CCFF")
@@ -124,7 +124,7 @@ class ArbeitsanfangFrame(Frame):
         # (instead of only the minimal width to enclose its children).
         self.columnconfigure(0, weight=1)
 
-        title_bar = TopBar(self)
+        title_bar = TitleBar(self)
         title_bar.grid(row=0, column=0, sticky="NESW")
 
         anf_label = Label(self, text="Arbeitsanfang", background="#66CCFF")
@@ -296,7 +296,7 @@ class ArbeitsendeFrame(Frame):
         # (instead of only the minimal width to enclose its children).
         self.columnconfigure(0, weight=1)
 
-        title_bar = TopBar(self)
+        title_bar = TitleBar(self)
         title_bar.grid(row=0, column=0, sticky="NESW")
 
         ende_label = Label(self, text="Arbeitsende", background="#66CCFF")

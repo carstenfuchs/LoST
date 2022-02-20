@@ -2,8 +2,9 @@
 from tkinter import *
 from tkinter import font
 from tkinter import ttk
-from frames import TopBar, WelcomeFrame, ArbeitsanfangFrame, ArbeitsendeFrame
-from model import Model, State
+
+from frames import WelcomeFrame, ArbeitsanfangFrame, ArbeitsendeFrame
+from terminal import Model, State
 
 
 class RootWindow(Tk):
