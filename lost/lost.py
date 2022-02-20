@@ -29,9 +29,9 @@ class RootWindow(Tk):
         #print("update_to_model")
         #print(f"{model.intention = }")
         next_frame = self.frame_Welcome
-        if model.intention in (Intention.ARBEITS_ANFANG, Intention.ARBEITS_ANFANG_JETZT, Intention.ARBEITS_ANFANG_SCHICHT):
+        if model.intention == Intention.ENTER_START_OF_WORK_DETAILS:
             next_frame = self.frame_Arbeitsanfang
-        elif model.intention == Intention.ARBEITS_ENDE:
+        elif model.intention == Intention.ENTER_END_OF_WORK_DETAILS:
             next_frame = self.frame_Arbeitsende
 
         if hasattr(next_frame, "update_to_model"):

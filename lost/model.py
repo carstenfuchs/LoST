@@ -3,10 +3,10 @@ from enum import Enum
 
 class Intention(Enum):
     """The overall intention for which the terminal is used."""
-    ARBEITS_ANFANG = 1
-    ARBEITS_ANFANG_SCHICHT = 2
-    ARBEITS_ANFANG_JETZT = 3
-    ARBEITS_ENDE = 4
+
+    WELCOME = 1
+    ENTER_START_OF_WORK_DETAILS = 2
+    ENTER_END_OF_WORK_DETAILS = 3
 
 
 class Model:
@@ -15,14 +15,21 @@ class Model:
         self.root_window = root_window
         self.is_updating = False
 
-        self.intention = None
+        self.intention = Intention.WELCOME
+        self.sow_type = None
         self.department = None
         self.pause = None
 
     def set_intention(self, intention):
         self.intention = intention
+        self.sow_type = None
         self.department = None
         self.pause = None
+        self.notify_observers()
+
+    def set_sow_type(self, sow):
+        assert sow in (None, 'schicht', 'jetzt')
+        self.sow_type  = sow
         self.notify_observers()
 
     def set_department(self, dept):

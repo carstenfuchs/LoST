@@ -34,8 +34,7 @@ class TopBar(Frame):
             self.update_clock()
 
     def on_LMB_click(self, event):
-        # reset GUI
-        self.winfo_toplevel().model.set_intention(None)
+        self.winfo_toplevel().model.set_intention(Intention.WELCOME)
 
     def update_clock(self):
         self.clock.config(text=datetime.now().strftime("%H:%M"))
@@ -95,10 +94,10 @@ class WelcomeFrame(Frame):
         self.update_clock()
 
     def on_click_Arbeitsanfang(self):
-        self.winfo_toplevel().model.set_intention(Intention.ARBEITS_ANFANG)
+        self.winfo_toplevel().model.set_intention(Intention.ENTER_START_OF_WORK_DETAILS)
 
     def on_click_Arbeitsende(self):
-        self.winfo_toplevel().model.set_intention(Intention.ARBEITS_ENDE)
+        self.winfo_toplevel().model.set_intention(Intention.ENTER_END_OF_WORK_DETAILS)
 
     def update_clock(self):
         now = datetime.now()
@@ -158,22 +157,22 @@ class ArbeitsanfangFrame(Frame):
         inactive_col = '#666666'
 
         self.schicht_button.config(
-            background=active_col if model.intention == Intention.ARBEITS_ANFANG_SCHICHT else inactive_col,
-            activebackground=active_col if model.intention == Intention.ARBEITS_ANFANG_SCHICHT else inactive_col,   # mouse hover color
+            background=active_col if model.sow_type == 'schicht' else inactive_col,
+            activebackground=active_col if model.sow_type == 'schicht' else inactive_col,   # mouse hover color
           # highlightbackground='red',      # used as base color for the border?
         )
 
         self.jetzt_button.config(
-            background=active_col if model.intention == Intention.ARBEITS_ANFANG_JETZT else inactive_col,
-            activebackground=active_col if model.intention == Intention.ARBEITS_ANFANG_JETZT else inactive_col,   # mouse hover color
+            background=active_col if model.sow_type == 'jetzt' else inactive_col,
+            activebackground=active_col if model.sow_type == 'jetzt' else inactive_col,   # mouse hover color
           # highlightbackground='red',      # used as base color for the border?
         )
 
     def on_click_Anfang_Jetzt(self):
-        self.winfo_toplevel().model.set_intention(Intention.ARBEITS_ANFANG_JETZT)
+        self.winfo_toplevel().model.set_sow_type('jetzt')
 
     def on_click_Anfang_Schicht(self):
-        self.winfo_toplevel().model.set_intention(Intention.ARBEITS_ANFANG_SCHICHT)
+        self.winfo_toplevel().model.set_sow_type('schicht')
 
 
 class DepartmentButtonsGrid(Frame):
