@@ -334,19 +334,71 @@ class ArbeitsendeFrame(Frame):
         self.pause_buttons.update_to_model(terminal)
 
 
-class SendingFrame(Frame):
+class WaitForServerFrame(Frame):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, background='#333333')
+        super().__init__(*args, **kwargs, background='black')
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.msg_label = Label(self, text="", background='black', foreground='white')
+        self.msg_label.grid(row=0, column=0)
+        self.timer_id = None
 
-        sending_label = Label(self, text="Sende …", background="blue", foreground="#FFCCCC")
-        sending_label.pack(side=TOP, fill=BOTH, expand=True)
+    def update_to_model(self, terminal):
+        self.msg_label.config(text="")
+        if self.timer_id:
+            # The timer is always expected to expire before this function is called again.
+            # Still, check if a timer is pending and cancel it explicitly, just in case.
+            self.after_cancel(self.timer_id)
+        self.timer_id = self.after(2000, self.update_message)
+
+    def update_message(self):
+        self.timer_id = None
+        self.msg_label.config(text="Warte auf Antwort vom Lori-Server …")
 
 
-class FeedbackFrame(Frame):
+class DisplayServerReplyFrame(Frame):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, background='#33AA66')
+        super().__init__(*args, **kwargs, background='black')
 
-        sending_label = Label(self, text="Sende …", background="green", foreground="white")
-        sending_label.pack(side=TOP, fill=BOTH, expand=True)
+        self.rowconfigure(0, weight= 0)               # title bar
+        self.rowconfigure(1, weight=12, uniform='u')  # vertical space
+        self.rowconfigure(2, weight= 2, uniform='u')  # buttons row
+        self.rowconfigure(3, weight= 1, uniform='u')  # vertical space
+
+        # Have the grid span the full width of the frame
+        # (instead of only the minimal width to enclose its children).
+        self.columnconfigure(0, weight=1)
+
+        title_bar = TitleBar(self, show_clock=False)
+        title_bar.grid(row=0, column=0, sticky="NESW")
+
+        buttons_row = Frame(self, background='black')
+        # Have the grid span the full height of its frame (which in turn is
+        # fully NESW-expanded to its parent cell below). Without `rowconfigure()`,
+        # the grid would only get the height of its children.
+        buttons_row.rowconfigure(0, weight=1)
+        buttons_row.columnconfigure(0, weight=6)
+        buttons_row.columnconfigure(1, weight=2)
+        buttons_row.columnconfigure(2, weight=1)
+        buttons_row.grid(row=2, column=0, sticky="NESW")
+
+        self.msg_label = Label(self, text="Es hat geklappt!", background='black', foreground='#66FF99')
+        self.msg_label.grid(row=1, column=0, sticky="W", padx=8)
+
+        ok_button = Button(
+            buttons_row,
+            text="OK",
+            command=self.on_click_OK,
+            font=('TkTextFont', 18),
+            foreground='white',
+            background='#666666',
+            activeforeground='white',     # mouse hover color
+            activebackground='#666666',   # mouse hover color
+            highlightbackground='black',  # used as base color for the border?
+        )
+        ok_button.grid(row=0, column=1, sticky="NESW")
+
+    def on_click_OK(self):
+        self.winfo_toplevel().terminal.set_state(State.WELCOME)

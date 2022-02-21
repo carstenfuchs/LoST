@@ -3,7 +3,7 @@ from tkinter import *
 from tkinter import font
 from tkinter import ttk
 
-from frames import WelcomeFrame, ArbeitsanfangFrame, ArbeitsendeFrame
+from frames import WelcomeFrame, ArbeitsanfangFrame, ArbeitsendeFrame, WaitForServerFrame, DisplayServerReplyFrame
 from terminal import Terminal, State
 
 
@@ -15,12 +15,16 @@ class RootWindow(Tk):
         self.title("LoST - Lori Stempeluhr Terminal")
         self.geometry("640x480")
 
-        if True:  # if localconfig.quit_with_ESC:
+        if True:  # if localconfig.DEBUG:
             self.bind('<Escape>', lambda x: self.destroy())
+            self.bind('<F1>', lambda x: self.terminal.process_RFID_tag_input('F1'))
+            self.bind('<F2>', lambda x: self.terminal.process_server_reply('server message'))
 
         self.frame_Welcome = WelcomeFrame(self)
         self.frame_Arbeitsanfang = ArbeitsanfangFrame(self)
         self.frame_Arbeitsende = ArbeitsendeFrame(self)
+        self.frame_WaitForServer = WaitForServerFrame(self)
+        self.frame_DisplayServerReply = DisplayServerReplyFrame(self)
         self.active_frame = None
 
         self.terminal = None
@@ -39,6 +43,10 @@ class RootWindow(Tk):
             next_frame = self.frame_Arbeitsanfang
         elif terminal.state == State.ENTER_END_OF_WORK_DETAILS:
             next_frame = self.frame_Arbeitsende
+        elif terminal.state == State.WAIT_FOR_SERVER_REPLY:
+            next_frame = self.frame_WaitForServer
+        elif terminal.state == State.DISPLAY_SERVER_REPLY:
+            next_frame = self.frame_DisplayServerReply
 
         if hasattr(next_frame, "update_to_model"):
             next_frame.update_to_model(terminal)

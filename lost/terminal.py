@@ -8,6 +8,15 @@ class State(Enum):
     WELCOME = 1
     ENTER_START_OF_WORK_DETAILS = 2
     ENTER_END_OF_WORK_DETAILS = 3
+    WAIT_FOR_SERVER_REPLY = 4
+    DISPLAY_SERVER_REPLY = 5
+
+
+USER_INPUT_STATES = (
+    State.WELCOME,
+    State.ENTER_START_OF_WORK_DETAILS,
+    State.ENTER_END_OF_WORK_DETAILS,
+)
 
 
 class Terminal:
@@ -38,9 +47,11 @@ class Terminal:
         self.pause = None
 
     def set_state(self, state):
-        self._set_state(state)
-        self.time_last_action = time.time()
-        self.notify_observers()
+        # This function is only to be called from the touch screen GUI.
+        if state in USER_INPUT_STATES:
+            self._set_state(state)
+            self.time_last_action = time.time()
+            self.notify_observers()
 
     def set_sow_type(self, sow):
         assert sow in (None, 'schicht', 'jetzt')
@@ -64,6 +75,22 @@ class Terminal:
             self._set_state(State.WELCOME)
             self.time_last_action = time.time()
             self.notify_observers()
+
+    def process_RFID_tag_input(self, key):
+        if self.state not in USER_INPUT_STATES:
+            # Ignore any RFID tag input if we are not expecting any.
+            return
+
+        # TODO: Send message to server ...
+        self._set_state(State.WAIT_FOR_SERVER_REPLY)
+        self.time_last_action = time.time()
+        self.notify_observers()
+
+    def process_server_reply(self, msg):
+        # self.last_server_message = msg
+        self._set_state(State.DISPLAY_SERVER_REPLY)
+        self.time_last_action = time.time()
+        self.notify_observers()
 
     def notify_observers(self):
         # Make sure that we don't accidentally enter infinite recursion.
