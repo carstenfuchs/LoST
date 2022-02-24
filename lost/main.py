@@ -4,6 +4,7 @@ from tkinter import font
 from tkinter import ttk
 
 from frames import WelcomeFrame, ArbeitsanfangFrame, ArbeitsendeFrame, WaitForServerFrame, DisplayServerReplyFrame
+from sm_card import SmartcardMonitor
 from terminal import Terminal, State
 
 
@@ -78,7 +79,15 @@ root_window.terminal = terminal
 #     print(font.nametofont(n).actual())
 # print(font.families())
 
+def test_on_smartcard_input(response, success):
+    print(f"On Smartcard Input: {response} --> {success}")
+
+scmon = SmartcardMonitor()
+scmon.init(test_on_smartcard_input)
+
 root_window.mainloop()
+
+scmon.shutdown()
 
 # It's not really necessary here, but let's explicitly reset the root window's
 # reference to the terminal in order to break the circular dependency.

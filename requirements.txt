@@ -1,2 +1,2 @@
 Babel==2.9.1
-# pyscard==1.9.9
+pyscard==2.0.2
