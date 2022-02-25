@@ -76,7 +76,7 @@ class Terminal:
             self.time_last_action = time.time()
             self.notify_observers()
 
-    def process_RFID_tag_input(self, key):
+    def on_smartcard_input(self, response, success):
         if self.state not in USER_INPUT_STATES:
             # Ignore any RFID tag input if we are not expecting any.
             return

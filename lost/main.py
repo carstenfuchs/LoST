@@ -6,6 +6,7 @@ from tkinter import ttk
 from frames import WelcomeFrame, ArbeitsanfangFrame, ArbeitsendeFrame, WaitForServerFrame, DisplayServerReplyFrame
 from sm_card import SmartcardMonitor
 from terminal import Terminal, State
+from thread_tools import thread_queue
 
 
 class RootWindow(Tk):
@@ -29,7 +30,26 @@ class RootWindow(Tk):
         self.active_frame = None
 
         self.terminal = None
+        self.check_thread_queue()
         self.drive_terminal_clock()
+
+    def check_thread_queue(self):
+        """
+        Checks if a thread has put something into the `thread_queue`.
+
+        When a thread had finished its work, it has put a callback into the
+        queue for us the pick up and process here in the main thread where we
+        can freely update the GUI.
+        """
+        for count in range(5):
+            try:
+                callback, args = thread_queue.get(block=False)
+            except queue.Empty:
+                break
+            callback(*args)
+
+        # Check the `thread_queue` again in 100 ms.
+        self.after(100, self.check_thread_queue)
 
     def drive_terminal_clock(self):
         if self.terminal is not None:
@@ -79,11 +99,8 @@ root_window.terminal = terminal
 #     print(font.nametofont(n).actual())
 # print(font.families())
 
-def test_on_smartcard_input(response, success):
-    print(f"On Smartcard Input: {response} --> {success}")
-
 scmon = SmartcardMonitor()
-scmon.init(test_on_smartcard_input)
+scmon.init(terminal.on_smartcard_input)
 
 root_window.mainloop()
 

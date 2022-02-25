@@ -1,6 +1,8 @@
 from smartcard.CardMonitoring import CardMonitor, CardObserver
 from smartcard.util import toHexString
 
+from thread_tools import thread_queue
+
 
 class SmartcardMonitor:
 
@@ -64,8 +66,10 @@ class LoSTCardObserver(CardObserver):
             success = sw1 in (0x90, 0x61)
             print(f'Smartcard: [💳] read card UID: status 0x{sw1:02x} 0x{sw2:02x}, result "{toHexString(response)}"')
 
-            # Not thread-safe callback.
-            self.callback(response, success)
+            # We are running in a worker thread of the `CardMonitor` here.
+            # Thus, put the callback and the results into the queue, to be
+            # picked up and processed in the main thread later.
+            thread_queue.put((self.callback, (response, success)))
 
         for card in removedCards:
             print(f'Smartcard: [--] user removed card "{toHexString(card.atr)}"')
