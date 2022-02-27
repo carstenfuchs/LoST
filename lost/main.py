@@ -6,6 +6,7 @@ from tkinter import font
 from tkinter import ttk
 
 from frames import WelcomeFrame, ArbeitsanfangFrame, ArbeitsendeFrame, WaitForServerFrame, DisplayServerReplyFrame
+from server import start_testserver
 from sm_card import SmartcardMonitor
 from terminal import Terminal, State
 from thread_tools import thread_queue
@@ -104,7 +105,15 @@ root_window.terminal = terminal
 scmon = SmartcardMonitor()
 scmon.init(terminal.on_smartcard_input)
 
+use_server = True
+if use_server:
+    httpd = start_testserver()
+
 root_window.mainloop()
+
+if use_server:
+    httpd.shutdown()
+    httpd.server_close()
 
 scmon.shutdown()
 

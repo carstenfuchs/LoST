@@ -7,8 +7,8 @@ from thread_tools import start_thread
 
 def post_stamp_event(smartcard_name):
     """Sends the smartcard details in a POST request to the server."""
-    r = requests.get(
-        "http://www.google.com",
+    r = requests.post(
+        "http://localhost:8000",
         # allow_redirects=False,
         # timeout=30.0,
     )
