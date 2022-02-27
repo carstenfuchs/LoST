@@ -1,5 +1,21 @@
 from enum import Enum
 import time
+import requests
+
+from thread_tools import start_thread
+
+
+def post_stamp_event(smartcard_name):
+    """Sends the smartcard details in a POST request to the server."""
+    r = requests.get(
+        "http://www.google.com",
+        # allow_redirects=False,
+        # timeout=30.0,
+    )
+
+    # The result of this thread is passed as a parameter to the callback
+    # in the main thread.
+    return r.text[:100]
 
 
 class State(Enum):
@@ -45,6 +61,7 @@ class Terminal:
         self.sow_type = None
         self.department = None
         self.pause = None
+        self.last_server_reply = None
 
     def set_state(self, state):
         # This function is only to be called from the touch screen GUI.
@@ -81,14 +98,25 @@ class Terminal:
             # Ignore any RFID tag input if we are not expecting any.
             return
 
-        # TODO: Send message to server ...
+        # TODO – but be careful to not have a runaway counter.
+        #   (e.g. reset after 10 Minutes idle?)
+        # if num_of_requests_in_flight >= 5:
+        #     # While we should never get here to send another request while the
+        #     # one before that is still in flight and has not yet timed out,
+        #     # make sure that any unforeseen circumstances cannot create an
+        #     # unlimited number of threads.
+        #     return
+
+        # Send the smartcard details in a POST request to the server.
+        start_thread(post_stamp_event, (response,), self.on_server_reply)
+
         self._set_state(State.WAIT_FOR_SERVER_REPLY)
         self.time_last_action = time.time()
         self.notify_observers()
 
-    def process_server_reply(self, msg):
-        # self.last_server_message = msg
+    def on_server_reply(self, msg):
         self._set_state(State.DISPLAY_SERVER_REPLY)
+        self.last_server_reply = msg
         self.time_last_action = time.time()
         self.notify_observers()
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import queue
+
 from tkinter import *
 from tkinter import font
 from tkinter import ttk

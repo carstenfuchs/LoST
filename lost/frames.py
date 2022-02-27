@@ -384,7 +384,7 @@ class DisplayServerReplyFrame(Frame):
         buttons_row.columnconfigure(2, weight=1)
         buttons_row.grid(row=2, column=0, sticky="NESW")
 
-        self.msg_label = Label(self, text="Es hat geklappt!", background='black', foreground='#66FF99')
+        self.msg_label = Label(self, text="", background='black', foreground='#66FF99')
         self.msg_label.grid(row=1, column=0, sticky="W", padx=8)
 
         ok_button = Button(
@@ -399,6 +399,9 @@ class DisplayServerReplyFrame(Frame):
             highlightbackground='black',  # used as base color for the border?
         )
         ok_button.grid(row=0, column=1, sticky="NESW")
+
+    def update_to_model(self, terminal):
+        self.msg_label.config(text=terminal.last_server_reply)
 
     def on_click_OK(self):
         self.winfo_toplevel().terminal.set_state(State.WELCOME)

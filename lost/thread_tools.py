@@ -1,4 +1,5 @@
 import queue
+import threading
 
 
 #
@@ -12,3 +13,15 @@ import queue
 
 
 thread_queue = queue.Queue()
+
+
+def thread_wrapper(action, action_args, callback):
+    # `action` is a callable that can be generally unaware that it is run in a
+    # worker thread (unless it modifies shared, global state).
+    result = action(*action_args)
+    thread_queue.put((callback, [result]))
+
+
+def start_thread(action, action_args, callback):
+    thr = threading.Thread(target=thread_wrapper, args=(action, action_args, callback))
+    thr.start()
