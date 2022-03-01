@@ -4,10 +4,6 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from time import sleep
 
 
-SERVER_NAME = 'localhost'
-SERVER_PORT = 8000
-
-
 class LoriRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
@@ -18,7 +14,7 @@ class LoriRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(bytes("<p>This is a test server for the LoST application.<br>", "utf8"))
         self.wfile.write(bytes("It replies to POST requests that LoST normally directs to a live Lori server.</p>", "utf8"))
         self.wfile.write(bytes(f"<p>This was a GET request to {self.path}</p>", "utf8"))
-        print("GET")
+        # print("do_GET()")
 
     def do_POST(self):
         self.send_response(200)
@@ -26,11 +22,11 @@ class LoriRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b'Hello, world!<br>')
         self.wfile.write(bytes(f"This was a POST request, path was {self.path}", "utf8"))
-        print("POST")
+        # print("do_POST()")
 
 
-def start_testserver():
-    httpd = HTTPServer((SERVER_NAME, SERVER_PORT), LoriRequestHandler)
+def start_testserver(port=8000):
+    httpd = HTTPServer(('localhost', port), LoriRequestHandler)
 
     thread = threading.Thread(target=httpd.serve_forever)
     thread.start()

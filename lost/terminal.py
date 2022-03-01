@@ -1,14 +1,22 @@
+from datetime import datetime
 from enum import Enum
 import time
 import requests
 
+import settings
 from thread_tools import start_thread
 
 
 def post_stamp_event(smartcard_name):
     """Sends the smartcard details in a POST request to the server."""
+    SERVER_NAME = settings.SERVER_ADDRESS[0]
+    SERVER_PORT = settings.SERVER_ADDRESS[1]
+
+    if SERVER_NAME == 'built-in':
+        SERVER_NAME = 'localhost'
+
     r = requests.post(
-        "http://localhost:8000",
+        f"http://{SERVER_NAME}:{SERVER_PORT}",
         # allow_redirects=False,
         # timeout=30.0,
     )
@@ -46,12 +54,13 @@ class Terminal:
     (In a sense, the model is itself a listener to input event providers.)
     """
 
-    def __init__(self, root_window):
+    def __init__(self, root_window, smartcard_logfile):
         # Note that we should properly employ the Observer pattern rather than
         # taking the `root_window` here: The terminal model might have a lot
         # more observers than only that, e.g. LED lights on the RPi or the RFID
         # reader, audio outputs, door openers, etc.
         self.root_window = root_window
+        self.smartcard_logfile = smartcard_logfile
         self.is_updating = False
         self._set_state(State.WELCOME)
         self.time_last_action = time.time()
@@ -107,6 +116,9 @@ class Terminal:
         #     # unlimited number of threads.
         #     return
 
+        # Log the captured smartcard details.
+        print(f"{datetime.now()} captured {response}", file=self.smartcard_logfile)
+
         # Send the smartcard details in a POST request to the server.
         start_thread(post_stamp_event, (response,), self.on_server_reply)
 
@@ -115,6 +127,9 @@ class Terminal:
         self.notify_observers()
 
     def on_server_reply(self, msg):
+        # Log the captured smartcard details.
+        print(f"{datetime.now()} server reply: {msg}", file=self.smartcard_logfile)
+
         self._set_state(State.DISPLAY_SERVER_REPLY)
         self.last_server_reply = msg
         self.time_last_action = time.time()

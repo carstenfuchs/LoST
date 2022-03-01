@@ -1,13 +1,16 @@
 #!/usr/bin/env python
+import settings
 from frames import RootWindow
 from server import start_testserver
 from sm_card import SmartcardMonitor
 from terminal import Terminal
 
 
+smartcard_logfile = open(settings.SMARTCARD_LOGFILE_PATH, mode='a', buffering=1)
+
 root_window = RootWindow()
 
-terminal = Terminal(root_window)
+terminal = Terminal(root_window, smartcard_logfile)
 
 # Initial setup of the listeners (the GUI).
 terminal.notify_observers()
@@ -26,13 +29,13 @@ root_window.terminal = terminal
 scmon = SmartcardMonitor()
 scmon.init(terminal.on_smartcard_input)
 
-use_server = True
-if use_server:
-    httpd = start_testserver()
+USE_SERVER = (settings.SERVER_ADDRESS[0] == 'built-in')
+if USE_SERVER:
+    httpd = start_testserver(settings.SERVER_ADDRESS[1])
 
 root_window.mainloop()
 
-if use_server:
+if USE_SERVER:
     httpd.shutdown()
     httpd.server_close()
 
@@ -41,3 +44,5 @@ scmon.shutdown()
 # It's not really necessary here, but let's explicitly reset the root window's
 # reference to the terminal in order to break the circular dependency.
 root_window.terminal = None
+
+smartcard_logfile.close()
