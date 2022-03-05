@@ -16,9 +16,21 @@ class RootWindow(Tk):
         self.geometry("640x480")
 
         if True:  # if localconfig.DEBUG:
-            self.bind('<Escape>', lambda x: self.destroy())
-            self.bind('<F1>', lambda x: self.terminal.process_RFID_tag_input('F1'))
-            self.bind('<F2>', lambda x: self.terminal.process_server_reply('server message'))
+            success_data = {
+                'ma': "Konrad Zuse (F1234)",
+            }
+            messages = ["Die Karte wurde erfolgreich eingelesen und ordentlich und regelkonform verarbeitet. Das Ergebnis hat allerdings nicht zu einer Zeitmeldung geführt, sondern es lagen besondere Umstände vor, die hier gemeldet werden. (Beispiele: neue Karte, gesperrte Karte, …)"]
+            errors = ["Ein technisches Problem hat das Auswerten der Karte verhindert. Das Einlesen wurde mit aktuellen Zeitpunkt aufgezeichnet und die Verarbeitung wird nach der Lösung des Problems automatisch nachgeholt."]
+
+            self.bind('<Escape>', lambda x: self.destroy() if self.terminal.state == State.WELCOME else self.terminal.set_state(State.WELCOME))
+            self.bind('<F1>', lambda x: self.terminal.set_state(State.WELCOME))
+            self.bind('<F2>', lambda x: self.terminal.set_state(State.ENTER_START_OF_WORK_DETAILS))
+            self.bind('<F3>', lambda x: self.terminal.set_state(State.ENTER_END_OF_WORK_DETAILS))
+            self.bind('<F4>', lambda x: self.terminal.on_smartcard_input('ABCD', True))
+            self.bind('<F5>', lambda x: self.terminal.on_server_reply(success_data))
+            self.bind('<F6>', lambda x: self.terminal.on_server_reply({'messages': messages}))
+            self.bind('<F7>', lambda x: self.terminal.on_server_reply({'errors': errors}))
+            self.bind('<F8>', lambda x: self.terminal.on_server_reply({}))
 
         self.frame_Welcome = WelcomeFrame(self)
         self.frame_Arbeitsanfang = ArbeitsanfangFrame(self)
