@@ -15,15 +15,31 @@ def post_stamp_event(smartcard_name):
     if SERVER_NAME == 'built-in':
         SERVER_NAME = 'localhost'
 
-    r = requests.post(
-        f"http://{SERVER_NAME}:{SERVER_PORT}",
-        # allow_redirects=False,
-        # timeout=30.0,
-    )
+    try:
+        r = requests.post(
+            f"http://{SERVER_NAME}:{SERVER_PORT}{settings.SERVER_URL}",
+            data={
+                'terminal_name': settings.TERMINAL_NAME,
+                'pwd': settings.TERMINAL_PASSWORD,
+                'tag_id': str(smartcard_name),
+            },
+            timeout=8.0,
+            verify=False,
+        )
+    except requests.exceptions.Timeout as e:
+        return {'errors': [str(e)]}
+
+    if r.status_code != 200:
+        return {'errors': ["status != 200"]}
+
+    try:
+        json = r.json()
+    except requests.exceptions.JSONDecodeError as e:
+        return {'errors': [str(e)]}
 
     # The result of this thread is passed as a parameter to the callback
     # in the main thread.
-    return r.text[:100]
+    return json
 
 
 class State(Enum):

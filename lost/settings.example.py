@@ -1,15 +1,16 @@
 from pathlib import Path
 
-# The terminal name is submitted along with the smartcard details to the
-# server.
+# The terminal name and password are submitted along with the smartcard details
+# to the server.
 TERMINAL_NAME = 'entrance'
+TERMINAL_PASSWORD = "insecure example password, don't use!"
 
 # In order to be able to recover from interruptions of network connectivity,
 # all outgoing and incoming data is logged. Make sure the path is writable.
 # SMARTCARD_LOGFILE_PATH = '/var/log/LoST/smartcards.log'
 SMARTCARD_LOGFILE_PATH = Path(__file__).resolve().parent.parent / 'smartcards.log'
 
-# The server address that captured smartcard details are posted to.
+# The server address and URL that captured smartcard details are posted to.
 # To facilitate testing and development, use 'built-in' as the server name.
 # This will start and use the server that is built into this program
 # and that will reply with technically correct but otherwise contrived data.
@@ -21,3 +22,4 @@ SMARTCARD_LOGFILE_PATH = Path(__file__).resolve().parent.parent / 'smartcards.lo
 #   # Uses an external, different server at 'localhost':
 #   SERVER_ADDRESS = ('localhost', 8000)
 SERVER_ADDRESS = ('built-in', 8000)
+SERVER_URL = '/submit/'
