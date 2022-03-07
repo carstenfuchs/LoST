@@ -20,12 +20,6 @@ terminal.notify_observers()
 # (The terminal in turn will notify its observers about its changed state.)
 root_window.terminal = terminal
 
-# print(font.names())
-# for n in font.names():
-#     # font.nametofont(n)['size'] = 12
-#     print(font.nametofont(n).actual())
-# print(font.families())
-
 scmon = SmartcardMonitor()
 scmon.init(terminal.on_smartcard_input)
 

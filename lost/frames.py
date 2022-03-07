@@ -2,9 +2,72 @@ import queue
 from babel.dates import format_datetime
 from datetime import datetime
 from tkinter import *
+from tkinter import font
 from tkinter import ttk
 from terminal import State
 from thread_tools import thread_queue
+
+
+class ColorProvider:
+
+    def __init__(self):
+        self.count = 0
+        self.colors = []
+
+        for g in (0x00, 0x66, 0xCC):
+            for b in (0x33, 0x99, 0xFF):
+                self.colors.append('#{:02x}{:02x}{:02x}'.format(0, g, b))
+
+    def get_bg_col(self):
+        # r = lambda: randint(0, 255)
+        # return '#{:02x}{:02x}{:02x}'.format(r(), r(), r())
+        self.count += 1
+        return self.colors[self.count % len(self.colors)]
+
+
+class FontProvider:
+
+    def __init__(self):
+        self.win_size_factor = 16.0
+        self.fonts = {}
+
+        # print("\nFont names:")
+        # for n in font.names():
+        #     print(f"  {n:18s} {font.nametofont(n).actual()}")
+
+        # print("\nFont families:")
+        # print(sorted(font.families()))
+
+    def resize(self, window_height):
+        """Updates the size of each font according to the new window height."""
+        self.win_size_factor = window_height / 480.0 * 20.0
+
+        for percent, font in self.fonts.items():
+            font.config(size=-int(self.win_size_factor * percent / 100.0))
+
+    def get_font(self, percent):
+        if percent in self.fonts:
+            return self.fonts[percent]
+
+        f = font.nametofont('TkTextFont').copy()
+        f.config(size=-int(self.win_size_factor * percent / 100.0))
+
+        print(f"Adding font size {percent} %")
+        self.fonts[percent] = f
+        return f
+
+
+cp = ColorProvider()
+fp = FontProvider()
+
+
+def adjust_wraplength(event):
+    """
+    Label widgets that support line wrapping can call this method on
+    resize (<Configure>) events to have their wrap length updated.
+    """
+    # Also see https://stackoverflow.com/questions/62485520/how-to-wrap-the-text-in-a-tkinter-label-dynamically
+    event.widget.config(wraplength=event.widget.winfo_width())
 
 
 class RootWindow(Tk):
@@ -40,8 +103,14 @@ class RootWindow(Tk):
         self.active_frame = None
 
         self.terminal = None
+        self.bind('<Configure>', self.on_resize)
         self.check_thread_queue()
         self.drive_terminal_clock()
+
+    def on_resize(self, event):
+        if event.widget == self:
+            # print(event)
+            fp.resize(event.height)
 
     def check_thread_queue(self):
         """
@@ -445,24 +514,91 @@ class WaitForServerFrame(Frame):
         self.msg_label.config(text="Warte auf Antwort vom Lori-Server …")
 
 
+class WorkHoursReplyGrid(Frame):
+
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs, background=cp.get_bg_col())
+
+        self.rowconfigure(0, weight=1)  # Anfang
+        self.rowconfigure(1, weight=1)  # Ende
+        self.rowconfigure(2, weight=1)  # Pause
+        self.rowconfigure(3, weight=1)  # Ergebnis
+
+        self.columnconfigure(0, weight=1)   # Labels (Anfang, Ende, Pause)
+        self.columnconfigure(1, weight=1)   # Values (8:00, …)
+        self.columnconfigure(2, weight=1)   # Notes (optional)
+
+        for row_nr, col_text in enumerate(("Anfang", "Ende", "Pause", "Ergebnis")):
+            l =  Label(self, text=col_text, background='orange', foreground='#66FF99', font=fp.get_font(100))
+            l.grid(row=row_nr, column=0, sticky="NESW", padx=8, pady=1)
+
+        for row_nr, col_text in enumerate(("8:00", "16:30", "0:30", "8:00")):
+            l =  Label(self, text=col_text, background='orange', foreground='#66FF99', font=fp.get_font(100))
+            l.grid(row=row_nr, column=1, sticky="E", padx=8)
+
+        for row_nr, col_text in enumerate(("1", "2", "3", "3")):
+            l =  Label(self, text=col_text, background='orange', foreground='#66FF99', font=fp.get_font(100))
+            l.grid(row=row_nr, column=2, sticky="W", padx=8)
+
+        # TODO: Pausenproblem?
+
+    def update_to_model(self, terminal):
+        pass
+
+
 class DisplayServerReplyFrame(Frame):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, background='black')
+        super().__init__(*args, **kwargs, background=cp.get_bg_col())
 
-        self.rowconfigure(0, weight= 0)               # title bar
-        self.rowconfigure(1, weight=12, uniform='u')  # vertical space
-        self.rowconfigure(2, weight= 2, uniform='u')  # buttons row
-        self.rowconfigure(3, weight= 1, uniform='u')  # vertical space
+      # ROW_NR_TITLE_BAR     = 0
+        ROW_NR_HEADLINE      = 0
+        ROW_NR_BORDER_TOP    = 1
+        ROW_NR_BODY          = 2   # shared by body_grid and msg_label
+        ROW_NR_BORDER_BOTTOM = 3
+        ROW_NR_EXTRA_MSG     = 4
+        ROW_NR_OK_BUTTON     = 5
+        ROW_NR_BOTTOM_SPACE  = 6
+
+      # self.rowconfigure(ROW_NR_TITLE_BAR,     weight= 0)
+        self.rowconfigure(ROW_NR_HEADLINE,      weight= 3, uniform='u')
+        self.rowconfigure(ROW_NR_BORDER_TOP,    weight= 0)
+        self.rowconfigure(ROW_NR_BODY,          weight=12, uniform='u')
+        self.rowconfigure(ROW_NR_BORDER_BOTTOM, weight= 0)
+        self.rowconfigure(ROW_NR_EXTRA_MSG,     weight= 3, uniform='u')
+        self.rowconfigure(ROW_NR_OK_BUTTON,     weight= 2, uniform='u')
+        self.rowconfigure(ROW_NR_BOTTOM_SPACE,  weight= 1, uniform='u')
 
         # Have the grid span the full width of the frame
         # (instead of only the minimal width to enclose its children).
         self.columnconfigure(0, weight=1)
 
-        title_bar = TitleBar(self, show_clock=False)
-        title_bar.grid(row=0, column=0, sticky="NESW")
+      # title_bar = TitleBar(self, show_clock=False)
+      # title_bar.grid(row=ROW_NR_TITLE_BAR, column=0, sticky="NESW")
 
-        buttons_row = Frame(self, background='black')
+        self.headline_label = Label(self, text="", background=cp.get_bg_col(), foreground='white', anchor='sw', font=fp.get_font(100))
+        self.headline_label.grid(row=ROW_NR_HEADLINE, column=0, sticky="NESW", padx=8, pady=2)
+
+        self.border_top = Frame(self, height=2, background='orange')
+        self.border_top.grid(row=ROW_NR_BORDER_TOP, column=0, sticky="NESW")
+
+        # The `body_grid` and the `msg_label` share the common row `ROW_NR_BODY`.
+        self.body_grid = WorkHoursReplyGrid(self)
+        self.body_grid.grid(row=ROW_NR_BODY, column=0, sticky="NESW", padx=8)
+
+        self.msg_label = Label(self, text="", wraplength=300, justify='left', background=cp.get_bg_col(), foreground='white', anchor='w', font=fp.get_font(100))
+        self.msg_label.grid(row=ROW_NR_BODY, column=0, sticky="EW", padx=8)
+        self.msg_label.bind('<Configure>', adjust_wraplength)
+
+        self.border_bottom = Frame(self, height=2, background='orange')
+        self.border_bottom.grid(row=ROW_NR_BORDER_BOTTOM, column=0, sticky="NESW")
+
+        self.extra_msg_label = Label(self, text="", wraplength=300, justify='left', background=cp.get_bg_col(), foreground='white', anchor='nw', font=fp.get_font(100))
+        self.extra_msg_label.grid(row=ROW_NR_EXTRA_MSG, column=0, sticky="NESW", padx=8, pady=2)
+        self.extra_msg_label.bind('<Configure>', adjust_wraplength)
+
+        # The row with the "OK" button.
+        buttons_row = Frame(self, background=cp.get_bg_col())
         # Have the grid span the full height of its frame (which in turn is
         # fully NESW-expanded to its parent cell below). Without `rowconfigure()`,
         # the grid would only get the height of its children.
@@ -470,16 +606,13 @@ class DisplayServerReplyFrame(Frame):
         buttons_row.columnconfigure(0, weight=6)
         buttons_row.columnconfigure(1, weight=2)
         buttons_row.columnconfigure(2, weight=1)
-        buttons_row.grid(row=2, column=0, sticky="NESW")
-
-        self.msg_label = Label(self, text="", background='black', foreground='#66FF99')
-        self.msg_label.grid(row=1, column=0, sticky="W", padx=8)
+        buttons_row.grid(row=ROW_NR_OK_BUTTON, column=0, sticky="NESW")
 
         ok_button = Button(
             buttons_row,
             text="OK",
             command=self.on_click_OK,
-            font=('TkTextFont', 18),
+            font=fp.get_font(100),
             foreground='white',
             background='#666666',
             activeforeground='white',     # mouse hover color
@@ -489,7 +622,33 @@ class DisplayServerReplyFrame(Frame):
         ok_button.grid(row=0, column=1, sticky="NESW")
 
     def update_to_model(self, terminal):
-        self.msg_label.config(text=terminal.last_server_reply)
+        lsr = terminal.last_server_reply
+
+        self.body_grid.grid_remove()
+        self.msg_label.grid_remove()
+
+        if 'ma' in lsr:
+            self.headline_label.config(text=f"MA: {lsr['ma']}")
+            self.body_grid.update_to_model(terminal)
+            self.body_grid.grid()
+            self.msg_label.config(text="")
+            self.extra_msg_label.config(text="(keine extra_msg)")
+        elif 'messages' in lsr:
+            # Das Einscannen der Karte hat zwar nicht zu einer Aufzeichnung
+            # eines Timestamps geführt, aber es handelte sich trotzdem um eine
+            # ordentliche, regelkonforme Verarbeitung.
+            self.headline_label.config(text="Verarbeitung durch den Lori-Server")
+            self.msg_label.config(text="\n".join(lsr['messages']))
+            self.msg_label.grid()
+            self.extra_msg_label.config(text="(keine extra_msg)")
+        else:   # 'errors' in lsr
+            # Das Vorhandensein von 'errors' bedeutet, dass ein technisches
+            # Problem das Auswerten der Karte verhindert hat. Das Einlesen
+            # der Karte soll aufgezeichnet und später nachgeholt werden.
+            self.headline_label.config(text="Ein Problem ist aufgetreten")
+            self.msg_label.config(text="\n".join(lsr.get('errors', [""])) or "Die Ursache dieses Problems konnte nicht festgestellt werden.")
+            self.msg_label.grid()
+            self.extra_msg_label.config(text="Die Karte wurde korrekt eingelesen und aufgezeichnet. Die Übertragung wird bei nächster Gelegenheit automatisch nachgeholt.")
 
     def on_click_OK(self):
         self.winfo_toplevel().terminal.set_state(State.WELCOME)
