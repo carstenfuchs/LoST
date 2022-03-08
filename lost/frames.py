@@ -81,6 +81,14 @@ class RootWindow(Tk):
         if True:  # if localconfig.DEBUG:
             success_data = {
                 'ma': "Konrad Zuse (F1234)",
+                'now': "not used at this time",
+                'feedback': {
+                    'anfang': "8:00",
+                    'ende': None,
+                    'pause': None,
+                    'pause_error': "Die Pausenzeit fehlt.",
+                    'result': None,
+                },
             }
             messages = ["Die Karte wurde erfolgreich eingelesen und ordentlich und regelkonform verarbeitet. Das Ergebnis hat allerdings nicht zu einer Zeitmeldung geführt, sondern es lagen besondere Umstände vor, die hier gemeldet werden. (Beispiele: neue Karte, gesperrte Karte, …)"]
             errors = ["Ein technisches Problem hat das Auswerten der Karte verhindert. Das Einlesen wurde mit aktuellen Zeitpunkt aufgezeichnet und die Verarbeitung wird nach der Lösung des Problems automatisch nachgeholt."]
@@ -526,24 +534,49 @@ class WorkHoursReplyGrid(Frame):
 
         self.columnconfigure(0, weight=1)   # Labels (Anfang, Ende, Pause)
         self.columnconfigure(1, weight=1)   # Values (8:00, …)
-        self.columnconfigure(2, weight=1)   # Notes (optional)
+        self.columnconfigure(2, weight=2)   # Notes (optional)
+
+        self.time_labels = []
+        self.note_labels = []
 
         for row_nr, col_text in enumerate(("Anfang", "Ende", "Pause", "Ergebnis")):
-            l =  Label(self, text=col_text, background='orange', foreground='#66FF99', font=fp.get_font(100))
-            l.grid(row=row_nr, column=0, sticky="NESW", padx=8, pady=1)
+            l = Label(self, text=col_text, background='darkorange', foreground='white', font=fp.get_font(100))
+            l.grid(row=row_nr, column=0, sticky="NSW", padx=(30, 0), pady=1)
 
-        for row_nr, col_text in enumerate(("8:00", "16:30", "0:30", "8:00")):
-            l =  Label(self, text=col_text, background='orange', foreground='#66FF99', font=fp.get_font(100))
+        for row_nr in range(4):
+            l = Label(self, text="", background='darkorange', foreground='white', font=fp.get_font(100))
             l.grid(row=row_nr, column=1, sticky="E", padx=8)
+            self.time_labels.append(l)
 
-        for row_nr, col_text in enumerate(("1", "2", "3", "3")):
-            l =  Label(self, text=col_text, background='orange', foreground='#66FF99', font=fp.get_font(100))
+        for row_nr in range(4):
+            l = Label(self, text="", background='darkorange', foreground='#AAAAAA', font=fp.get_font(100))
             l.grid(row=row_nr, column=2, sticky="W", padx=8)
-
-        # TODO: Pausenproblem?
+            self.note_labels.append(l)
 
     def update_to_model(self, terminal):
-        pass
+        lsr = terminal.last_server_reply
+        feedback = lsr.get('feedback', {})
+
+        anfang = feedback.get('anfang')
+        self.time_labels[0].config(text=anfang or "_____")
+        self.note_labels[0].config(text="ok" if anfang else "noch nicht ableitbar")
+
+        ende = feedback.get('ende')
+        self.time_labels[1].config(text=ende or "_____")
+        self.note_labels[1].config(text="ok" if ende else "noch nicht ableitbar")
+
+        pause = feedback.get('pause')
+        self.time_labels[2].config(text=pause or "_____")
+
+        pause_error = feedback.get('pause_error')
+        if pause_error:
+            self.note_labels[2].config(text="Problem")
+        else:
+            self.note_labels[2].config(text="ok" if pause else "noch nicht ableitbar")
+
+        result = feedback.get('result')
+        self.time_labels[3].config(text=result or "_____")
+        self.note_labels[3].config(text="")
 
 
 class DisplayServerReplyFrame(Frame):
@@ -628,26 +661,33 @@ class DisplayServerReplyFrame(Frame):
         self.msg_label.grid_remove()
 
         if 'ma' in lsr:
-            self.headline_label.config(text=f"MA: {lsr['ma']}")
+            feedback = lsr.get('feedback', {})
+            self.headline_label.config(text=lsr['ma'])
+            self.border_top.config(background='#00FF66')
             self.body_grid.update_to_model(terminal)
             self.body_grid.grid()
             self.msg_label.config(text="")
-            self.extra_msg_label.config(text="(keine extra_msg)")
+            self.border_bottom.config(background='#00FF66')
+            self.extra_msg_label.config(text=feedback.get('pause_error') or "(keine extra_msg)")
         elif 'messages' in lsr:
             # Das Einscannen der Karte hat zwar nicht zu einer Aufzeichnung
             # eines Timestamps geführt, aber es handelte sich trotzdem um eine
             # ordentliche, regelkonforme Verarbeitung.
             self.headline_label.config(text="Verarbeitung durch den Lori-Server")
+            self.border_top.config(background='#FFFF00')
             self.msg_label.config(text="\n".join(lsr['messages']))
             self.msg_label.grid()
+            self.border_bottom.config(background='#FFFF00')
             self.extra_msg_label.config(text="(keine extra_msg)")
         else:   # 'errors' in lsr
             # Das Vorhandensein von 'errors' bedeutet, dass ein technisches
             # Problem das Auswerten der Karte verhindert hat. Das Einlesen
             # der Karte soll aufgezeichnet und später nachgeholt werden.
             self.headline_label.config(text="Ein Problem ist aufgetreten")
+            self.border_top.config(background='#FF0000')
             self.msg_label.config(text="\n".join(lsr.get('errors', [""])) or "Die Ursache dieses Problems konnte nicht festgestellt werden.")
             self.msg_label.grid()
+            self.border_bottom.config(background='#FF0000')
             self.extra_msg_label.config(text="Die Karte wurde korrekt eingelesen und aufgezeichnet. Die Übertragung wird bei nächster Gelegenheit automatisch nachgeholt.")
 
     def on_click_OK(self):
