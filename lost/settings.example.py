@@ -1,7 +1,12 @@
 from pathlib import Path
 
+# If the debug mode is turned on with `DEBUG = True`, additional features are
+# enabled that support development and debugging, such as keyboard shortcuts,
+# extra logging and psychedelic colors.
+DEBUG = False
+
 # The terminal name and password are submitted along with the smartcard details
-# to the server.
+# to the web server.
 TERMINAL_NAME = 'entrance'
 TERMINAL_PASSWORD = "insecure example password, don't use!"
 
