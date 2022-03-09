@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import settings
-from frames import RootWindow
+from mode_logistics.gui import RootWindow
+from mode_logistics.terminal import Terminal
 from server import start_testserver
 from sm_card import SmartcardMonitor
-from terminal import Terminal
 
 
 smartcard_logfile = open(settings.SMARTCARD_LOGFILE_PATH, mode='a', buffering=1)

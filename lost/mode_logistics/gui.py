@@ -4,7 +4,7 @@ from datetime import datetime
 from tkinter import *
 # from tkinter import ttk
 
-from terminal import State
+from mode_logistics.terminal import State
 from thread_tools import thread_queue
 from widgets import adjust_wraplength, cp, fp, DisplayServerReplyFrame, PauseButtonsRow, TitleBar, TouchButton, WaitForServerFrame
 
