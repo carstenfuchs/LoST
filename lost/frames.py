@@ -14,8 +14,8 @@ class ColorProvider:
         self.count = 0
         self.colors = []
 
-        for g in (0x00, 0x66, 0xCC):
-            for b in (0x33, 0x99, 0xFF):
+        for g in (0x00, 0x22, 0x44):
+            for b in (0x33, 0x66, 0x99):
                 self.colors.append('#{:02x}{:02x}{:02x}'.format(0, g, b))
 
     def get_bg_col(self):
@@ -68,6 +68,29 @@ def adjust_wraplength(event):
     """
     # Also see https://stackoverflow.com/questions/62485520/how-to-wrap-the-text-in-a-tkinter-label-dynamically
     event.widget.config(wraplength=event.widget.winfo_width())
+
+
+class TouchButton(Button):
+
+    def __init__(self, parent, font_size=100, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+
+        self.config(
+            font=fp.get_font(font_size),
+            foreground='white',
+            background='#666666',
+            activeforeground='white',     # mouse hover color
+            activebackground='#666666',   # mouse hover color
+            highlightbackground='black',  # used as base color for the border?
+        )
+
+    def set_active(self, active):
+        bg = '#66CCFF' if active else '#666666'
+        self.config(
+            background=bg,
+            activebackground=bg,
+          # highlightbackground='red',
+        )
 
 
 class RootWindow(Tk):
@@ -173,25 +196,23 @@ class RootWindow(Tk):
 class TitleBar(Frame):
 
     def __init__(self, parent, show_clock=True, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs, relief=RAISED, borderwidth=1)   #, background="#CCCCCC")
+        super().__init__(parent, *args, **kwargs, background=cp.get_bg_col())
 
         self.columnconfigure(0, weight=1, uniform='u')   # "Rofu Kinderland"
         self.columnconfigure(1, weight=1, uniform='u')   # HH:MM
         self.columnconfigure(2, weight=1, uniform='u')   # "Lori"
 
-        rofu_label = Label(self, text="Rofu Kinderland")
+        rofu_label = Label(self, text="Rofu Kinderland", foreground='white', background=cp.get_bg_col())
         rofu_label.grid(row=0, column=0, sticky="W", padx=5, pady=8)
 
-        self.clock = Label(self)
+        self.clock = Label(self, foreground='white', background=cp.get_bg_col())
         self.clock.grid(row=0, column=1, padx=5, pady=8)
 
-        lori_label = Label(self, text="Lori")
+        lori_label = Label(self, text="Lori", foreground='white', background=cp.get_bg_col())
         lori_label.grid(row=0, column=2, sticky="E", padx=5, pady=8)
 
-        if False:
-            rofu_label.config(background="#ffeeaa")
-            self.clock.config(background="#34A2FE")
-            lori_label.config(background="#FFCCCC")
+        bottom_border = Frame(self, height=2, background='#3380E6')
+        bottom_border.grid(row=1, column=0, columnspan=3, sticky="NESW")
 
         self.bind('<Button-1>', self.on_LMB_click)
 
@@ -209,7 +230,7 @@ class TitleBar(Frame):
 class WelcomeFrame(Frame):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, background=None)
+        super().__init__(*args, **kwargs, background=cp.get_bg_col())
 
         self.rowconfigure(0, weight=0)  # title bar
         self.rowconfigure(1, weight=1)  # vertical space
@@ -226,13 +247,13 @@ class WelcomeFrame(Frame):
         title_bar = TitleBar(self, show_clock=False)
         title_bar.grid(row=0, column=0, sticky="NESW")
 
-        self.time_label = Label(self, text="", background="#66CCFF")
+        self.time_label = Label(self, text="", foreground='white', background=cp.get_bg_col(), font=fp.get_font(150))
         self.time_label.grid(row=2, column=0, sticky="NESW")
 
-        self.date_label = Label(self, text="", background="cyan")
+        self.date_label = Label(self, text="", foreground='#999999', background=cp.get_bg_col(), font=fp.get_font(100))
         self.date_label.grid(row=3, column=0, sticky="NESW")
 
-        buttons_row = Frame(self, background='#ffeeaa')
+        buttons_row = Frame(self, background=cp.get_bg_col())
         # Have the grid span the full height of its frame (which in turn is
         # fully NESW-expanded to its parent cell below). Without `rowconfigure()`,
         # the grid would only get the height of its children.
@@ -244,17 +265,11 @@ class WelcomeFrame(Frame):
         buttons_row.columnconfigure(4, weight=1, uniform='space')
         buttons_row.grid(row=5, column=0, sticky="NESW")
 
-        anfang_button = Button(buttons_row, text="Anfang", command=self.on_click_Arbeitsanfang)
+        anfang_button = TouchButton(buttons_row, text="Anfang", command=self.on_click_Arbeitsanfang)
         anfang_button.grid(row=0, column=1, sticky="NESW")
 
-        ende_button = Button(buttons_row, text="Ende", command=self.on_click_Arbeitsende)
+        ende_button = TouchButton(buttons_row, text="Ende", command=self.on_click_Arbeitsende)
         ende_button.grid(row=0, column=3, sticky="NESW")
-
-        if False:
-            # Helpers, only useful for debugging.
-            Label(self, text="1", background="green").grid(row=1, column=0, sticky="NESW")
-            Label(self, text="4", background="blue").grid(row=4, column=0, sticky="NESW")
-            Label(self, text="6", background="red").grid(row=6, column=0, sticky="NESW")
 
         self.update_clock()
 
@@ -275,7 +290,7 @@ class WelcomeFrame(Frame):
 class ArbeitsanfangFrame(Frame):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, background='lime')
+        super().__init__(*args, **kwargs, background=cp.get_bg_col())
         # self.config['background'] = 'yellow'
 
         self.rowconfigure(0, weight=0)  # title bar
@@ -292,10 +307,10 @@ class ArbeitsanfangFrame(Frame):
         title_bar = TitleBar(self)
         title_bar.grid(row=0, column=0, sticky="NESW")
 
-        anf_label = Label(self, text="Arbeitsanfang", background="#66CCFF")
+        anf_label = Label(self, text="Arbeitsanfang", foreground='white', background=cp.get_bg_col(), font=fp.get_font(100))
         anf_label.grid(row=2, column=0, sticky="NESW")
 
-        buttons_row = Frame(self, background='#ffeeaa')
+        buttons_row = Frame(self, background=cp.get_bg_col())
         # Have the grid span the full height of its frame (which in turn is
         # fully NESW-expanded to its parent cell below). Without `rowconfigure()`,
         # the grid would only get the height of its children.
@@ -307,31 +322,15 @@ class ArbeitsanfangFrame(Frame):
         buttons_row.columnconfigure(4, weight=1, uniform='space')
         buttons_row.grid(row=4, column=0, sticky="NESW")
 
-        self.schicht_button = Button(buttons_row, text="gemäß\nSchichtplanung", command=self.on_click_Anfang_Schicht)
+        self.schicht_button = TouchButton(buttons_row, text="gemäß\nSchicht", command=self.on_click_Anfang_Schicht)
         self.schicht_button.grid(row=0, column=1, sticky="NESW")
 
-        self.jetzt_button = Button(buttons_row, text="» jetzt «", command=self.on_click_Anfang_Jetzt)
+        self.jetzt_button = TouchButton(buttons_row, text="» jetzt «", command=self.on_click_Anfang_Jetzt)
         self.jetzt_button.grid(row=0, column=3, sticky="NESW")
 
-        if False:
-            # set debug colors
-            pass
-
     def update_to_model(self, terminal):
-        active_col = '#66CCFF'
-        inactive_col = '#666666'
-
-        self.schicht_button.config(
-            background=active_col if terminal.sow_type == 'schicht' else inactive_col,
-            activebackground=active_col if terminal.sow_type == 'schicht' else inactive_col,   # mouse hover color
-          # highlightbackground='red',      # used as base color for the border?
-        )
-
-        self.jetzt_button.config(
-            background=active_col if terminal.sow_type == 'jetzt' else inactive_col,
-            activebackground=active_col if terminal.sow_type == 'jetzt' else inactive_col,   # mouse hover color
-          # highlightbackground='red',      # used as base color for the border?
-        )
+        self.schicht_button.set_active(terminal.sow_type == 'schicht')
+        self.jetzt_button.set_active(terminal.sow_type == 'jetzt')
 
     def on_click_Anfang_Jetzt(self):
         self.winfo_toplevel().terminal.set_sow_type('jetzt')
@@ -343,7 +342,7 @@ class ArbeitsanfangFrame(Frame):
 class DepartmentButtonsGrid(Frame):
 
     def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+        super().__init__(parent, *args, **kwargs, background=cp.get_bg_col())
         self.buttons = []
 
         self.departments = (
@@ -368,22 +367,14 @@ class DepartmentButtonsGrid(Frame):
             for col_nr, dept_name in enumerate(row):
                 if not dept_name:
                     continue
-                btn = Button(self, text=dept_name)
+                btn = TouchButton(self, font_size=70, text=dept_name)
                 btn.grid(row=row_nr, column=col_nr, sticky="NESW")
                 btn.bind('<Button-1>', self.on_LMB_click)
                 self.buttons.append(btn)
 
     def update_to_model(self, terminal):
-        active_col = '#66CCFF'
-        inactive_col = '#666666'
-        dept_str = terminal.department
-
         for btn in self.buttons:
-            btn.config(
-                background=active_col if btn.cget('text') == dept_str else inactive_col,
-                activebackground=active_col if btn.cget('text') == dept_str else inactive_col,   # mouse hover color
-              # highlightbackground='red',      # used as base color for the border?
-            )
+            btn.set_active(btn.cget('text') == terminal.department)
 
     def on_LMB_click(self, event):
         text = event.widget.cget('text')
@@ -403,26 +394,19 @@ class PauseButtonsRow(Frame):
         self.rowconfigure(0, weight=1)
 
         button_labels = ('0:00', '0:15', '0:30', '0:45', '1:00', '+15')
-        self.buttons = [Button(self, text=label) for label in button_labels]
+        self.buttons = [TouchButton(self, text=label) for label in button_labels]
 
         for nr, btn in enumerate(self.buttons):
             btn.grid(row=0, column=nr, sticky="NESW")
             btn.bind('<Button-1>', self.on_LMB_click)
 
     def update_to_model(self, terminal):
-        active_col = '#66CCFF'
-        inactive_col = '#666666'
-
         p_str = ''
         if terminal.pause is not None:
             p_str = f"{terminal.pause // 60}:{terminal.pause % 60:02}"
 
         for btn in self.buttons:
-            btn.config(
-                background=active_col if btn.cget('text') == p_str else inactive_col,
-                activebackground=active_col if btn.cget('text') == p_str else inactive_col,   # mouse hover color
-              # highlightbackground='red',      # used as base color for the border?
-            )
+            btn.set_active(btn.cget('text') == p_str)
 
     def on_LMB_click(self, event):
         text = event.widget.cget('text')
@@ -443,7 +427,7 @@ class PauseButtonsRow(Frame):
 class ArbeitsendeFrame(Frame):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, background='lime')
+        super().__init__(*args, **kwargs, background=cp.get_bg_col())
         # self.config['background'] = 'yellow'
 
         self.rowconfigure(0, weight=0)  # title bar
@@ -464,24 +448,20 @@ class ArbeitsendeFrame(Frame):
         title_bar = TitleBar(self)
         title_bar.grid(row=0, column=0, sticky="NESW")
 
-        ende_label = Label(self, text="Arbeitsende", background="#66CCFF")
+        ende_label = Label(self, text="Arbeitsende", foreground='white', background=cp.get_bg_col(), font=fp.get_font(100))
         ende_label.grid(row=2, column=0, sticky="NESW")
 
-        self.dept_label = Label(self, text="Bereich", background="#66CCFF")
+        self.dept_label = Label(self, text="Bereich", foreground='#AAAAAA', background=cp.get_bg_col(), font=fp.get_font(80))
         self.dept_label.grid(row=4, column=0, sticky="NESW")
 
         self.dept_grid = DepartmentButtonsGrid(self)
         self.dept_grid.grid(row=5, column=0, sticky="NESW")
 
-        self.pause_label = Label(self, text="Pause", background="#66CCFF")
+        self.pause_label = Label(self, text="Pause", foreground='#AAAAAA', background=cp.get_bg_col(), font=fp.get_font(80))
         self.pause_label.grid(row=7, column=0, sticky="NESW")
 
         self.pause_buttons = PauseButtonsRow(self)
         self.pause_buttons.grid(row=8, column=0, sticky="NESW")
-
-        if False:
-            # set debug colors
-            pass
 
     def update_to_model(self, terminal):
         dept_str = "Bereich"
@@ -540,16 +520,16 @@ class WorkHoursReplyGrid(Frame):
         self.note_labels = []
 
         for row_nr, col_text in enumerate(("Anfang", "Ende", "Pause", "Ergebnis")):
-            l = Label(self, text=col_text, background='darkorange', foreground='white', font=fp.get_font(100))
+            l = Label(self, text=col_text, background=cp.get_bg_col(), foreground='white', font=fp.get_font(100))
             l.grid(row=row_nr, column=0, sticky="NSW", padx=(30, 0), pady=1)
 
         for row_nr in range(4):
-            l = Label(self, text="", background='darkorange', foreground='white', font=fp.get_font(100))
+            l = Label(self, text="", background=cp.get_bg_col(), foreground='white', font=fp.get_font(100))
             l.grid(row=row_nr, column=1, sticky="E", padx=8)
             self.time_labels.append(l)
 
         for row_nr in range(4):
-            l = Label(self, text="", background='darkorange', foreground='#AAAAAA', font=fp.get_font(100))
+            l = Label(self, text="", background=cp.get_bg_col(), foreground='#AAAAAA', font=fp.get_font(100))
             l.grid(row=row_nr, column=2, sticky="W", padx=8)
             self.note_labels.append(l)
 
@@ -641,17 +621,7 @@ class DisplayServerReplyFrame(Frame):
         buttons_row.columnconfigure(2, weight=1)
         buttons_row.grid(row=ROW_NR_OK_BUTTON, column=0, sticky="NESW")
 
-        ok_button = Button(
-            buttons_row,
-            text="OK",
-            command=self.on_click_OK,
-            font=fp.get_font(100),
-            foreground='white',
-            background='#666666',
-            activeforeground='white',     # mouse hover color
-            activebackground='#666666',   # mouse hover color
-            highlightbackground='black',  # used as base color for the border?
-        )
+        ok_button = TouchButton(buttons_row, text="OK", command=self.on_click_OK)
         ok_button.grid(row=0, column=1, sticky="NESW")
 
     def update_to_model(self, terminal):
