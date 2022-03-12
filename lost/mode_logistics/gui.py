@@ -11,7 +11,7 @@ from widgets import adjust_wraplength, cp, fp, DisplayServerReplyFrame, PauseBut
 
 class RootWindow(Tk):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, terminal, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.title("LoST - Lori Stempeluhr Terminal")
@@ -53,7 +53,7 @@ class RootWindow(Tk):
         self.frame_DisplayServerReply = DisplayServerReplyFrame(self)
         self.active_frame = None
 
-        self.terminal = None
+        self.terminal = terminal
         self.bind('<Configure>', self.on_resize)
         self.check_thread_queue()
         self.drive_terminal_clock()

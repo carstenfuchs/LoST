@@ -30,15 +30,17 @@ class Terminal:
     (In a sense, the model is itself a listener to input event providers.)
     """
 
-    def __init__(self, root_window):
-        # Note that we should properly employ the Observer pattern rather than
-        # taking the `root_window` here: The terminal model might have a lot
-        # more observers than only that, e.g. LED lights on the RPi or the RFID
-        # reader, audio outputs, door openers, etc.
-        self.root_window = root_window
+    def __init__(self):
+        self._observers = []
         self.is_updating = False
         self._set_state(State.WELCOME)
         self.time_last_action = time.time()
+
+    def add_observer(self, obs):
+        self._observers.append(obs)
+
+    def clear_observers(self):
+        self._observers.clear()
 
     def _set_state(self, state):
         self.state = state
@@ -95,5 +97,6 @@ class Terminal:
         # Make sure that we don't accidentally enter infinite recursion.
         assert not self.is_updating
         self.is_updating = True
-        self.root_window.update_to_model(self)
+        for obs in self._observers:
+            obs.update_to_model(self)
         self.is_updating = False
