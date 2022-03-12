@@ -6,11 +6,9 @@ from server import start_testserver
 from sm_card import SmartcardMonitor
 
 
-smartcard_logfile = open(settings.SMARTCARD_LOGFILE_PATH, mode='a', buffering=1)
-
 root_window = RootWindow()
 
-terminal = Terminal(root_window, smartcard_logfile)
+terminal = Terminal(root_window)
 
 # Initial setup of the listeners (the GUI).
 terminal.notify_observers()
@@ -20,8 +18,8 @@ terminal.notify_observers()
 # (The terminal in turn will notify its observers about its changed state.)
 root_window.terminal = terminal
 
-scmon = SmartcardMonitor()
-scmon.init(terminal.on_smartcard_input)
+scmon = SmartcardMonitor(terminal)
+scmon.init()
 
 USE_SERVER = (settings.SERVER_ADDRESS[0] == 'built-in')
 if USE_SERVER:
@@ -38,5 +36,3 @@ scmon.shutdown()
 # It's not really necessary here, but let's explicitly reset the root window's
 # reference to the terminal in order to break the circular dependency.
 root_window.terminal = None
-
-smartcard_logfile.close()

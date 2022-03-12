@@ -1,24 +1,83 @@
 from smartcard.CardMonitoring import CardMonitor, CardObserver
 from smartcard.util import toHexString
+import requests
 
-from thread_tools import thread_queue
+import settings
+from thread_tools import start_thread, thread_queue
+
+
+def post_stamp_event(smartcard_name):
+    """Sends the smartcard details in a POST request to the server."""
+    SERVER_NAME = settings.SERVER_ADDRESS[0]
+    SERVER_PORT = settings.SERVER_ADDRESS[1]
+
+    if SERVER_NAME == 'built-in':
+        SERVER_NAME = 'localhost'
+
+    try:
+        r = requests.post(
+            f"http://{SERVER_NAME}:{SERVER_PORT}{settings.SERVER_URL}",
+            data={
+                'terminal_name': settings.TERMINAL_NAME,
+                'pwd': settings.TERMINAL_PASSWORD,
+                'tag_id': str(smartcard_name),
+            },
+            timeout=8.0,
+            verify=False,
+        )
+    except requests.exceptions.Timeout as e:
+        return {'errors': [str(e)]}
+
+    if r.status_code != 200:
+        return {'errors': ["status != 200"]}
+
+    try:
+        json = r.json()
+    except requests.exceptions.JSONDecodeError as e:
+        return {'errors': [str(e)]}
+
+    # The result of this thread is passed as a parameter to the callback
+    # in the main thread.
+    return json
 
 
 class SmartcardMonitor:
 
-    def __init__(self):
+    def __init__(self, terminal):
         self.cardmonitor = None
         self.cardobserver = None
+        self.terminal = terminal
 
-    def init(self, on_smartcard_callback):
+    def init(self):
         self.cardmonitor = CardMonitor()
-        self.cardobserver = LoSTCardObserver(on_smartcard_callback)
+        self.cardobserver = LoSTCardObserver(self.on_smartcard_input)
         self.cardmonitor.addObserver(self.cardobserver)
 
     def shutdown(self):
         self.cardmonitor.deleteObserver(self.cardobserver)
         self.cardobserver = None
         self.cardmonitor = None
+
+    def on_smartcard_input(self, response, success):
+        """
+        This function is called after a smartcard has been read by the `LoSTCardObserver`.
+        It is a callback that runs in the programs main thread.
+        """
+        if not self.terminal.expect_smartcard():
+            return
+
+        # TODO – but be careful to not have a runaway counter.
+        #   (e.g. reset after 10 Minutes idle?)
+        # if num_of_requests_in_flight >= 5:
+        #     # While we should never get here to send another request while the
+        #     # one before that is still in flight and has not yet timed out,
+        #     # make sure that any unforeseen circumstances cannot create an
+        #     # unlimited number of threads.
+        #     return
+
+        # Send the smartcard details in a POST request to the server.
+        start_thread(post_stamp_event, (response,), self.terminal.on_server_reply)
+        self.terminal.set_state_Wait_For_Sv_Reply()
 
 
 # https://stackoverflow.com/questions/13051167/apdu-command-to-get-smart-card-uid

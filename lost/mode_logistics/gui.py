@@ -40,7 +40,7 @@ class RootWindow(Tk):
             self.bind('<F1>', lambda x: self.terminal.set_state(State.WELCOME))
             self.bind('<F2>', lambda x: self.terminal.set_state(State.ENTER_START_OF_WORK_DETAILS))
             self.bind('<F3>', lambda x: self.terminal.set_state(State.ENTER_END_OF_WORK_DETAILS))
-            self.bind('<F4>', lambda x: self.terminal.on_smartcard_input('ABCD', True))
+            # self.bind('<F4>', lambda x: self.terminal.on_smartcard_input('ABCD', True)) # TODO: Call sm_mon.on_smartcard_input
             self.bind('<F5>', lambda x: self.terminal.on_server_reply(success_data))
             self.bind('<F6>', lambda x: self.terminal.on_server_reply({'messages': messages}))
             self.bind('<F7>', lambda x: self.terminal.on_server_reply({'errors': errors}))
