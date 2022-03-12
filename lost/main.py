@@ -2,6 +2,7 @@
 import settings
 from mode_logistics.gui import RootWindow
 from mode_logistics.terminal import Terminal
+from network_handler import NetworkHandler
 from server import start_testserver
 from sm_card import SmartcardMonitor
 
@@ -13,7 +14,9 @@ terminal = Terminal()
 # (The terminal in turn will notify its observers about its changed state.)
 root_window = RootWindow(terminal)
 
-scmon = SmartcardMonitor(terminal)
+network_handler = NetworkHandler(terminal)
+
+scmon = SmartcardMonitor(terminal, network_handler)
 scmon.init()
 
 # The terminal could have numerous additional observers. Examples include:
