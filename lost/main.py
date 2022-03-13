@@ -9,15 +9,13 @@ from sm_card import SmartcardMonitor
 
 terminal = Terminal()
 
-# The root window needs to know the terminal so that event handlers can access
-# it when implementing the effects of the handled events.
+# The root window, the network handler and the smartcard monitor all need to
+# know the terminal so that their event handlers can access it when
+# implementing the effects of the handled events.
 # (The terminal in turn will notify its observers about its changed state.)
 root_window = RootWindow(terminal)
-
 network_handler = NetworkHandler(terminal)
-
-scmon = SmartcardMonitor(terminal, network_handler)
-scmon.init()
+sc_mon = SmartcardMonitor(terminal, network_handler)
 
 # The terminal could have numerous additional observers. Examples include:
 # LED lights on the Raspberry Pi, LED lights on the smartcard reader, audio
@@ -38,4 +36,4 @@ if USE_SERVER:
     httpd.server_close()
 
 terminal.clear_observers()
-scmon.shutdown()
+sc_mon.shutdown()

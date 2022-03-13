@@ -7,12 +7,8 @@ from thread_tools import thread_queue
 class SmartcardMonitor:
 
     def __init__(self, terminal, network_handler):
-        self.cardmonitor = None
-        self.cardobserver = None
         self.terminal = terminal
         self.network_handler = network_handler
-
-    def init(self):
         self.cardmonitor = CardMonitor()
         self.cardobserver = LoSTCardObserver(self.on_smartcard_input)
         self.cardmonitor.addObserver(self.cardobserver)
@@ -24,7 +20,7 @@ class SmartcardMonitor:
 
     def on_smartcard_input(self, response, success):
         """
-        This function is called after a smartcard has been read by the `LoSTCardObserver`.
+        This function is called when a smartcard has been read by the `LoSTCardObserver`.
         It is a callback that runs in the program's main thread.
         """
         if not self.terminal.expect_smartcard():
