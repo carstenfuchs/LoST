@@ -1,18 +1,19 @@
-import queue
 from babel.dates import format_datetime
 from datetime import datetime
 from tkinter import *
 # from tkinter import ttk
 
 from mode_logistics.terminal import State
-from thread_tools import thread_queue
 from widgets import adjust_wraplength, cp, fp, DisplayServerReplyFrame, PauseButtonsRow, TitleBar, TouchButton, WaitForServerFrame
 
 
 class RootWindow(Tk):
 
-    def __init__(self, terminal, *args, **kwargs):
+    def __init__(self, terminal, main_con, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.terminal = terminal
+        self.main_con = main_con
 
         self.title("LoST - Lori Stempeluhr Terminal")
 
@@ -40,11 +41,12 @@ class RootWindow(Tk):
             self.bind('<F1>', lambda x: self.terminal.set_state(State.WELCOME))
             self.bind('<F2>', lambda x: self.terminal.set_state(State.ENTER_START_OF_WORK_DETAILS))
             self.bind('<F3>', lambda x: self.terminal.set_state(State.ENTER_END_OF_WORK_DETAILS))
-            # self.bind('<F4>', lambda x: self.terminal.on_smartcard_input('ABCD', True)) # TODO: Call sm_mon.on_smartcard_input
             self.bind('<F5>', lambda x: self.terminal.on_server_reply(success_data))
             self.bind('<F6>', lambda x: self.terminal.on_server_reply({'messages': messages}))
             self.bind('<F7>', lambda x: self.terminal.on_server_reply({'errors': errors}))
             self.bind('<F8>', lambda x: self.terminal.on_server_reply({}))
+            self.bind('<F9>', lambda x: self.main_con.simulate_smartcard_input('ABCD'))
+          # self.bind('<F10>', lambda x: self.main_con.simulate_server_reply())
 
         self.frame_Welcome = WelcomeFrame(self)
         self.frame_Arbeitsanfang = ArbeitsanfangFrame(self)
@@ -53,9 +55,8 @@ class RootWindow(Tk):
         self.frame_DisplayServerReply = DisplayServerReplyFrame(self)
         self.active_frame = None
 
-        self.terminal = terminal
         self.bind('<Configure>', self.on_resize)
-        self.check_thread_queue()
+        self.drive_main_connector()
         self.drive_terminal_clock()
 
     def on_resize(self, event):
@@ -63,23 +64,16 @@ class RootWindow(Tk):
             # print(event)
             fp.resize(event.height)
 
-    def check_thread_queue(self):
+    def drive_main_connector(self):
         """
-        Checks if a thread has put something into the `thread_queue`.
+        Forward clock tick events to the main connector.
 
-        When a thread had finished its work, it has put a callback into the
-        queue for us the pick up and process here in the main thread where we
-        can freely update the GUI.
+        In a Tkinter program, GUI functions like this are the natural place to receive
+        timer events. As these events are also needed elsewhere (in non-GUI code), we pass
+        them to the main connector that will further distribute them.
         """
-        for count in range(5):
-            try:
-                callback, args = thread_queue.get(block=False)
-            except queue.Empty:
-                break
-            callback(*args)
-
-        # Check the `thread_queue` again in 100 ms.
-        self.after(100, self.check_thread_queue)
+        self.main_con.on_clock_tick()
+        self.after(100, self.drive_main_connector)
 
     def drive_terminal_clock(self):
         if self.terminal is not None:
