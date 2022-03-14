@@ -2,8 +2,8 @@
 import queue
 
 import settings
-from mode_logistics.gui import RootWindow
-from mode_logistics.terminal import Terminal
+from modes.logistics_gui import RootWindow
+from modes.logistics_terminal import Terminal
 from network_handler import NetworkHandler
 from server import start_testserver
 from sm_card import SmartcardMonitor

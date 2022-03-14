@@ -3,7 +3,7 @@ from datetime import datetime
 from tkinter import *
 # from tkinter import ttk
 
-from mode_logistics.terminal import State
+from modes.logistics_terminal import State
 from widgets import adjust_wraplength, cp, fp, DisplayServerReplyFrame, PauseButtonsRow, TitleBar, TouchButton, WaitForServerFrame
 
 
