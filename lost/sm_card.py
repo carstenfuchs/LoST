@@ -23,12 +23,12 @@ class SmartcardMonitor:
         This function is called when a smartcard has been read by the `LoSTCardObserver`.
         It is a callback that runs in the program's main thread.
         """
-        if not self.terminal.expect_smartcard():
+        if not self.terminal.is_expecting_smartcard():
             return
 
         # Send the smartcard details in a POST request to the server.
         self.network_handler.send_to_Lori(response)
-        self.terminal.set_state_Wait_For_Sv_Reply()
+        self.terminal.on_server_post_sent()
 
 
 # https://stackoverflow.com/questions/13051167/apdu-command-to-get-smart-card-uid

@@ -39,10 +39,10 @@ class RootWindow(Tk):
 
             self.bind('<Escape>', lambda x: self.destroy() if self.terminal.state == State.WELCOME else self.terminal.set_state(State.WELCOME))
             self.bind('<F1>', lambda x: self.terminal.set_state(State.WELCOME))
-            self.bind('<F5>', lambda x: self.terminal.on_server_reply(success_data))
-            self.bind('<F6>', lambda x: self.terminal.on_server_reply({'messages': messages}))
-            self.bind('<F7>', lambda x: self.terminal.on_server_reply({'errors': errors}))
-            self.bind('<F8>', lambda x: self.terminal.on_server_reply({}))
+            self.bind('<F5>', lambda x: self.terminal.on_server_reply_received(success_data))
+            self.bind('<F6>', lambda x: self.terminal.on_server_reply_received({'messages': messages}))
+            self.bind('<F7>', lambda x: self.terminal.on_server_reply_received({'errors': errors}))
+            self.bind('<F8>', lambda x: self.terminal.on_server_reply_received({}))
             self.bind('<F9>', lambda x: self.main_con.simulate_smartcard_input('ABCD'))
           # self.bind('<F10>', lambda x: self.main_con.simulate_server_reply())
 
@@ -117,7 +117,7 @@ class WelcomeFrame(Frame):
         self.date_label = Label(self, text="", anchor='n', foreground='#666666', background=cp.get_bg_col(), font=fp.get_font(120))
         self.date_label.grid(row=3, column=0, sticky="NESW")
 
-        self.pause_label = Label(self, text="Pause", foreground='#3380E6', background=cp.get_bg_col(), font=fp.get_font(100))
+        self.pause_label = Label(self, text="Pause", foreground='#3380E6', background=cp.get_bg_col(), font=fp.get_font(120))
         self.pause_label.grid(row=5, column=0, sticky="NESW")
 
         self.pause_buttons = PauseButtonsRow(self)

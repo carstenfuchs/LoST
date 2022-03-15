@@ -1,5 +1,6 @@
 from enum import Enum
 import time
+from modes.base_terminal import BaseTerminal
 
 
 class State(Enum):
@@ -19,28 +20,13 @@ USER_INPUT_STATES = (
 )
 
 
-class Terminal:
-    """
-    This class represents a terminal, modeling its complete internal state.
-
-    In the MVC pattern, this is the model.
-    It must deal with many types and sources of input: events from the GUI,
-    the RFID reader, incoming network messages, timers, special hardware (e.g.
-    from the RPi's GPIO pins), etc.
-    (In a sense, the model is itself a listener to input event providers.)
-    """
+class Terminal(BaseTerminal):
+    """This class represents a terminal for logistics personnel."""
 
     def __init__(self):
-        self._observers = []
-        self.is_updating = False
+        super().__init__()
         self._set_state(State.WELCOME)
         self.time_last_action = time.time()
-
-    def add_observer(self, obs):
-        self._observers.append(obs)
-
-    def clear_observers(self):
-        self._observers.clear()
 
     def _set_state(self, state):
         self.state = state
@@ -49,9 +35,6 @@ class Terminal:
         self.pause = None
         self.last_server_reply = None
 
-    def expect_smartcard(self):
-        return self.state in USER_INPUT_STATES
-
     def set_state(self, state):
         # This function is only to be called from the touch screen GUI.
         # TODO: This is not quite true – also the smartcard reader is a kind of GUI!
@@ -59,10 +42,6 @@ class Terminal:
             self._set_state(state)
             self.time_last_action = time.time()
             self.notify_observers()
-
-    def set_state_Wait_For_Sv_Reply(self):
-        # The only reason for this function is so that the sm_mon doesn't need to import the State constants
-        self.set_state(State.WAIT_FOR_SERVER_REPLY)
 
     def set_sow_type(self, sow):
         assert sow in (None, 'schicht', 'jetzt')
@@ -87,16 +66,14 @@ class Terminal:
             self.time_last_action = time.time()
             self.notify_observers()
 
-    def on_server_reply(self, msg):
+    def is_expecting_smartcard(self):
+        return self.state in USER_INPUT_STATES
+
+    def on_server_post_sent(self):
+        self.set_state(State.WAIT_FOR_SERVER_REPLY)
+
+    def on_server_reply_received(self, reply):
         self._set_state(State.DISPLAY_SERVER_REPLY)
-        self.last_server_reply = msg
+        self.last_server_reply = reply
         self.time_last_action = time.time()
         self.notify_observers()
-
-    def notify_observers(self):
-        # Make sure that we don't accidentally enter infinite recursion.
-        assert not self.is_updating
-        self.is_updating = True
-        for obs in self._observers:
-            obs.update_to_model(self)
-        self.is_updating = False

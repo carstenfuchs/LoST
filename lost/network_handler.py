@@ -61,4 +61,4 @@ class NetworkHandler:
 
     def on_server_reply(self, msg):
         print(f"{datetime.now()} server reply: {msg}", file=self.logfile)
-        self.terminal.on_server_reply(msg)
+        self.terminal.on_server_reply_received(msg)
