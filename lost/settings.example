@@ -5,6 +5,10 @@ from pathlib import Path
 # extra logging and psychedelic colors.
 DEBUG = False
 
+# The terminal mode is one of the built-in modes of operation. At this time,
+# modes 'logistics' and 'office' are available.
+TERMINAL_MODE = 'office'
+
 # The terminal name and password are submitted along with the smartcard details
 # to the web server.
 TERMINAL_NAME = 'entrance'

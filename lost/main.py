@@ -2,12 +2,20 @@
 import queue
 
 import settings
-from modes.logistics_gui import RootWindow
-from modes.logistics_terminal import Terminal
 from network_handler import NetworkHandler
 from server import start_testserver
 from sm_card import SmartcardMonitor
 from thread_tools import thread_queue
+
+
+if settings.TERMINAL_MODE == 'logistics':
+    from modes.logistics_gui import RootWindow
+    from modes.logistics_terminal import Terminal
+elif settings.TERMINAL_MODE == 'office':
+    from modes.office_gui import RootWindow
+    from modes.office_terminal import Terminal
+else:
+    assert False, "Unknown terminal mode."
 
 
 class MainConnector:
