@@ -38,6 +38,10 @@ class BaseTerminal:
             obs.update_to_model(self)
         self._is_updating = False
 
+    def set_state_welcome(self):
+        # Child classes are expected to override this method!
+        pass
+
     def is_expecting_smartcard(self):
         # Child classes are expected to override this method!
         return False

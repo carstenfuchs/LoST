@@ -121,7 +121,7 @@ class TitleBar(Frame):
             self.update_clock()
 
     def on_LMB_click(self, event):
-        self.winfo_toplevel().terminal.set_state(State.WELCOME)
+        self.winfo_toplevel().terminal.set_state_welcome()
 
     def update_clock(self):
         self.clock.config(text=datetime.now().strftime("%H:%M"))
@@ -371,4 +371,4 @@ class DisplayServerReplyFrame(Frame):
             self.extra_msg_label.config(text="Die Karte wurde korrekt eingelesen und aufgezeichnet. Die Übertragung wird bei nächster Gelegenheit automatisch nachgeholt.")
 
     def on_click_OK(self):
-        self.winfo_toplevel().terminal.set_state(State.WELCOME)
+        self.winfo_toplevel().terminal.set_state_welcome()

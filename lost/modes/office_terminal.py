@@ -32,6 +32,10 @@ class Terminal(BaseTerminal):
             self._set_state(state)
             self.notify_observers()
 
+    def set_state_welcome(self):
+        self._set_state(State.WELCOME)
+        self.notify_observers()
+
     def set_pause(self, pause):
         self.pause = pause
         self.notify_observers()

@@ -43,6 +43,11 @@ class Terminal(BaseTerminal):
             self.time_last_action = time.time()
             self.notify_observers()
 
+    def set_state_welcome(self):
+        self._set_state(State.WELCOME)
+        self.time_last_action = time.time()
+        self.notify_observers()
+
     def set_sow_type(self, sow):
         assert sow in (None, 'schicht', 'jetzt')
         self.sow_type  = sow
@@ -67,12 +72,15 @@ class Terminal(BaseTerminal):
             self.notify_observers()
 
     def is_expecting_smartcard(self):
+        # Overrides the method in the parent class.
         return self.state in USER_INPUT_STATES
 
     def on_server_post_sent(self):
+        # Overrides the method in the parent class.
         self.set_state(State.WAIT_FOR_SERVER_REPLY)
 
     def on_server_reply_received(self, reply):
+        # Overrides the method in the parent class.
         self._set_state(State.DISPLAY_SERVER_REPLY)
         self.last_server_reply = reply
         self.time_last_action = time.time()
