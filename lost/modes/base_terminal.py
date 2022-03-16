@@ -42,6 +42,10 @@ class BaseTerminal:
         # Child classes are expected to override this method!
         pass
 
+    def set_state_system_panel(self):
+        # Child classes are expected to override this method!
+        pass
+
     def is_expecting_smartcard(self):
         # Child classes are expected to override this method!
         return False

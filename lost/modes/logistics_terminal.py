@@ -11,6 +11,7 @@ class State(Enum):
     ENTER_END_OF_WORK_DETAILS = 3
     WAIT_FOR_SERVER_REPLY = 4
     DISPLAY_SERVER_REPLY = 5
+    SYSTEM_PANEL = 6
 
 
 USER_INPUT_STATES = (
@@ -45,6 +46,11 @@ class Terminal(BaseTerminal):
 
     def set_state_welcome(self):
         self._set_state(State.WELCOME)
+        self.time_last_action = time.time()
+        self.notify_observers()
+
+    def set_state_system_panel(self):
+        self._set_state(State.SYSTEM_PANEL)
         self.time_last_action = time.time()
         self.notify_observers()
 

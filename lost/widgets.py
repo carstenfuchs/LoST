@@ -1,4 +1,8 @@
+import os
+import subprocess
+import time
 from datetime import datetime
+from shutil import disk_usage
 from tkinter import *
 from tkinter import font as tkfont
 # from tkinter import ttk
@@ -16,14 +20,14 @@ class ColorProvider:
             for b in (0x33, 0x66, 0x99):
                 self.colors.append('#{:02x}{:02x}{:02x}'.format(0, g, b))
 
-    def get_bg_col(self):
+    def get_bg_col(self, default='black'):
         if settings.DEBUG:
             # r = lambda: randint(0, 255)
             # return '#{:02x}{:02x}{:02x}'.format(r(), r(), r())
             self.count += 1
             return self.colors[self.count % len(self.colors)]
 
-        return 'black'
+        return default
 
 
 class FontProvider:
@@ -96,7 +100,7 @@ class TouchButton(Button):
 
 class TitleBar(Frame):
 
-    def __init__(self, parent, show_clock=True, *args, **kwargs):
+    def __init__(self, parent, show_clock=True, border_color='#3380E6', *args, **kwargs):
         super().__init__(parent, *args, **kwargs, background=cp.get_bg_col())
 
         self.columnconfigure(0, weight=1, uniform='u')   # "Rofu Kinderland"
@@ -112,7 +116,7 @@ class TitleBar(Frame):
         lori_label = Label(self, text="Lori", foreground='white', background=cp.get_bg_col(), font=fp.get_font(60))
         lori_label.grid(row=0, column=2, sticky="E", padx=10, pady=8)
 
-        bottom_border = Frame(self, height=2, background='#3380E6')
+        bottom_border = Frame(self, height=2, background=border_color)
         bottom_border.grid(row=1, column=0, columnspan=3, sticky="NESW")
 
         self.bind('<Button-1>', self.on_LMB_click)
@@ -157,6 +161,12 @@ class PauseButtonsRow(Frame):
     def on_LMB_click(self, event):
         text = event.widget.cget('text')
         mdl_pause = self.winfo_toplevel().terminal.pause
+
+        if mdl_pause == 120 + 45 and text == '0:45':
+            # A pause of 2:45 hours followed by a click on '0:45' opens the system panel.
+            print("Invoking the system panel.")
+            self.winfo_toplevel().terminal.set_state_system_panel()
+            return
 
         if text == '+15':
             if mdl_pause is None:
@@ -372,3 +382,98 @@ class DisplayServerReplyFrame(Frame):
 
     def on_click_OK(self):
         self.winfo_toplevel().terminal.set_state_welcome()
+
+
+def fmt_bytes(size, decimal_places=2):
+    for unit in ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']:
+        if size < 1024.0 or unit == 'PiB':
+            break
+        size /= 1024.0
+
+    return f"{size:.{decimal_places}f} {unit:3}"
+
+
+class SystemPanelFrame(Frame):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs, background=cp.get_bg_col())
+
+        self.rowconfigure(0, weight=0)               # title bar
+        self.rowconfigure(1, weight=3, uniform='u')  # headline
+        self.rowconfigure(2, weight=2, uniform='u')  # quit program
+        self.rowconfigure(3, weight=2, uniform='u')  # system shutdown
+        self.rowconfigure(4, weight=1, uniform='u')  # vertical space
+        self.rowconfigure(5, weight=2, uniform='u')  # "back" button
+        self.rowconfigure(6, weight=1, uniform='u')  # vertical space
+
+        self.columnconfigure(0, weight=1, uniform='a')  # buttons
+        self.columnconfigure(1, weight=1, uniform='a')  # system info text
+
+        title_bar = TitleBar(self, show_clock=True, border_color='#FF7722')
+        title_bar.grid(row=0, column=0, columnspan=2, sticky="NESW")
+
+        headline_label = Label(self, text="System", foreground='white', background=cp.get_bg_col(), anchor='w', font=fp.get_font(150))
+        headline_label.grid(row=1, column=0, columnspan=2, sticky="NESW", padx=10)
+
+        quit_button = TouchButton(self, text="Programm beenden", anchor='w', command=self.on_click_quit_program)
+        quit_button.grid(row=2, column=0, sticky="NESW", padx=10)
+        shut_button = TouchButton(self, text="System herunterfahren", anchor='w', command=self.on_click_shutdown)
+        shut_button.grid(row=3, column=0, sticky="NESW", padx=10)
+        back_button = TouchButton(self, text="← zurück zum Terminal", anchor='w', command=self.on_click_back)
+        back_button.grid(row=5, column=0, sticky="NESW", padx=10)
+
+        # The `rowspan` below seems to adversely affect the `uniform='u'` above.
+        # A bug in Tkinter?
+        self.sysinfo_label = Label(self, text="", foreground='#FF7722', justify='left', anchor='n', background=cp.get_bg_col(), font=fp.get_font(70))
+        self.sysinfo_label.grid(row=2, rowspan=4, column=1, sticky="NESW", padx=(0, 10))
+
+        self.time_updated = None
+        self.update_system_info()
+
+    def update_to_model(self, terminal):
+        self.time_updated = time.time()
+
+    def on_click_quit_program(self):
+        print("Quitting program.")
+        self.winfo_toplevel().destroy()
+
+    def on_click_shutdown(self):
+        if settings.DEBUG:
+            print("System shutdown is not initiated in debug mode.")
+        else:
+            print("System shutdown initiated.")
+            subprocess.run(['shutdown', '--poweroff', 'now'])
+
+    def on_click_back(self):
+        self.winfo_toplevel().terminal.set_state_welcome()
+
+    def update_system_info(self):
+        self.after(1000, self.update_system_info)
+
+        if self.time_updated is None:
+            return
+
+        if time.time() - self.time_updated > 30.0:
+            return
+
+        # A lot is left to be done here, especially about proper exception handling and
+        # error checking. Regarding additional features, see:
+        #   - https://www.raspberrypi.com/documentation/computers/os.html#vcgencmd
+        #   - https://znil.net/index.php/Temperatur_/_Spannung_etc._des_Raspberry_Pi_selbst_auslesen
+        #   - https://raspberrypi.stackexchange.com/questions/105811/measuring-the-cpu-temp-and-gpu-temp-in-bash-and-python-3-5-3-pi-2-3b-3b-4b
+
+        sysinfo = ""
+        sysinfo += f"System load:\n{os.getloadavg()}\n"
+
+        disk_total, disk_used, disk_free = disk_usage("/")
+        sysinfo += f"\nDisk usage:\n{fmt_bytes(disk_used)} used\n{fmt_bytes(disk_free)} free\n"
+
+        with open("/sys/class/thermal/thermal_zone0/temp") as temp_file:
+            # https://www.elektronik-kompendium.de/sites/raspberry-pi/1911241.htm
+            # https://raspberrypi.stackexchange.com/questions/41784/temperature-differences-between-cpu-gpu
+            cpu_temp = temp_file.readline().strip()
+
+        sysinfo += f"\nCPU core temperature:\n{float(cpu_temp)/1000} °C\n"
+        sysinfo += f"\nGPU core temperature:\nunavailable\n"
+
+        self.sysinfo_label.config(text=sysinfo)

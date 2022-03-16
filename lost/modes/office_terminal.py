@@ -8,6 +8,7 @@ class State(Enum):
     WELCOME = 1
     WAIT_FOR_SERVER_REPLY = 2
     DISPLAY_SERVER_REPLY = 3
+    SYSTEM_PANEL = 4
 
 
 USER_INPUT_STATES = (
@@ -34,6 +35,10 @@ class Terminal(BaseTerminal):
 
     def set_state_welcome(self):
         self._set_state(State.WELCOME)
+        self.notify_observers()
+
+    def set_state_system_panel(self):
+        self._set_state(State.SYSTEM_PANEL)
         self.notify_observers()
 
     def set_pause(self, pause):
