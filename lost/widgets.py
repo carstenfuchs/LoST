@@ -438,11 +438,11 @@ class SystemPanelFrame(Frame):
         self.winfo_toplevel().destroy()
 
     def on_click_shutdown(self):
-        if settings.DEBUG:
-            print("System shutdown is not initiated in debug mode.")
-        else:
-            print("System shutdown initiated.")
-            subprocess.run(['shutdown', '--poweroff', 'now'])
+        print("System shutdown initiated.")
+        # The shutdown is delayed by one minute as that gives us a chance to gracefully
+        # exit the program and the user a chance to cancel.
+        subprocess.run(['shutdown', '--poweroff', '+1'])
+        self.winfo_toplevel().destroy()
 
     def on_click_back(self):
         self.winfo_toplevel().terminal.set_state_welcome()
