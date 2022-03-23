@@ -36,6 +36,12 @@ class Terminal(BaseTerminal):
         self.pause = None
         self.last_server_reply = None
 
+    def get_user_input(self):
+        return {
+            'department': self.department,
+            'pause': self.pause,
+        }
+
     def set_state(self, state):
         # This function is only to be called from the touch screen GUI.
         # TODO: This is not quite true – also the smartcard reader is a kind of GUI!

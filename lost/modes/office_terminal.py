@@ -28,6 +28,11 @@ class Terminal(BaseTerminal):
         self.pause = None
         self.last_server_reply = None
 
+    def get_user_input(self):
+        return {
+            'pause': self.pause,
+        }
+
     def set_state(self, state):
         if state in USER_INPUT_STATES:
             self._set_state(state)

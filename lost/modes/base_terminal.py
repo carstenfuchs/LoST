@@ -38,6 +38,10 @@ class BaseTerminal:
             obs.update_to_model(self)
         self._is_updating = False
 
+    def get_user_input(self):
+        # Child classes are expected to override this method!
+        return {}
+
     def set_state_welcome(self):
         # Child classes are expected to override this method!
         pass
