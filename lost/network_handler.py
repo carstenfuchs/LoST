@@ -1,5 +1,6 @@
 from datetime import datetime
 import requests
+import time
 
 import settings
 from thread_tools import start_thread
@@ -52,6 +53,7 @@ class NetworkHandler:
     def __init__(self, terminal):
         # TODO: Can we employ connection pooling?
         self.terminal = terminal
+        self.time_last_sending = 0
         self.logfile = open(settings.SMARTCARD_LOGFILE_PATH, mode='a', buffering=1)
 
     def shutdown(self):
@@ -61,14 +63,14 @@ class NetworkHandler:
 
     def send_to_Lori(self, smartcard_id):
         print(f"{datetime.now()} captured {smartcard_id}", file=self.logfile)
-        # TODO – but be careful to not have a runaway counter.
-        #   (e.g. reset after 10 Minutes idle?)
-        # if num_of_requests_in_flight >= 5:
-        #     # While we should never get here to send another request while the
-        #     # one before that is still in flight and has not yet timed out,
-        #     # make sure that any unforeseen circumstances cannot create an
-        #     # unlimited number of threads.
-        #     return
+
+        # This should never kick in, but let's throttle the number of network
+        # transmissions and simultaneous threads anyway.
+        now = time.time()
+        if now - self.time_last_sending < 0.5:
+            print("Throttling network transmissions, DROPPING data!", file=self.logfile)
+            return
+        self.time_last_sending = now
 
         user_input = {
             'smartcard_id': smartcard_id,
