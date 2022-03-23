@@ -44,8 +44,13 @@ class NetworkHandler:
 
     def __init__(self, terminal):
         # TODO: Can we employ connection pooling?
-        self.logfile = open(settings.SMARTCARD_LOGFILE_PATH, mode='a', buffering=1)
         self.terminal = terminal
+        self.logfile = open(settings.SMARTCARD_LOGFILE_PATH, mode='a', buffering=1)
+
+    def shutdown(self):
+        # TODO: Should use a context manager instead!
+        # See https://realpython.com/python-with-statement/
+        self.logfile.close()
 
     def send_to_Lori(self, smartcard_name):
         print(f"{datetime.now()} captured {smartcard_name}", file=self.logfile)

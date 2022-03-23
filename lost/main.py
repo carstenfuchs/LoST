@@ -91,3 +91,4 @@ if USE_SERVER:
 main_con.sc_mon = None
 terminal.clear_observers()
 sc_mon.shutdown()
+network_handler.shutdown()
