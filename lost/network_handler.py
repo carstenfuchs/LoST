@@ -25,19 +25,19 @@ def post_stamp_event(smartcard_name):
             verify=False,
         )
     except requests.exceptions.Timeout as e:
-        return {'errors': [str(e)]}
+        return ({'errors': [str(e)]},)
 
     if r.status_code != 200:
-        return {'errors': ["status != 200"]}
+        return ({'errors': ["status != 200"]},)
 
     try:
         json = r.json()
     except requests.exceptions.JSONDecodeError as e:
-        return {'errors': [str(e)]}
+        return ({'errors': [str(e)]},)
 
     # The result of this thread is passed as a parameter to the callback
     # in the main thread.
-    return json
+    return (json,)
 
 
 class NetworkHandler:

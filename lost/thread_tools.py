@@ -19,7 +19,7 @@ def thread_wrapper(action, action_args, callback):
     # `action` is a callable that can be generally unaware that it is run in a
     # worker thread (unless it modifies shared, global state).
     result = action(*action_args)
-    thread_queue.put((callback, [result]))
+    thread_queue.put((callback, result))
 
 
 def start_thread(action, action_args, callback):
