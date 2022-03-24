@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import logging
 import queue
 
 import settings
@@ -16,6 +17,28 @@ elif settings.TERMINAL_MODE == 'office':
     from modes.office_terminal import Terminal
 else:
     assert False, "Unknown terminal mode."
+
+
+def setup_logger(logger):
+    log_level = logging.DEBUG if settings.DEBUG else logging.INFO
+    logger.setLevel(log_level)
+
+    c_handler = logging.StreamHandler()
+    f_handler = logging.FileHandler(settings.LOGFILE_PATH)
+
+    c_handler.setLevel(log_level)
+    f_handler.setLevel(log_level)
+
+    formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s')
+    c_handler.setFormatter(formatter)
+    f_handler.setFormatter(formatter)
+
+    logger.addHandler(c_handler)
+    logger.addHandler(f_handler)
+
+
+logger = logging.getLogger("lost")
+setup_logger(logger)
 
 
 class MainConnector:

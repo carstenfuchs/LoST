@@ -1,5 +1,6 @@
 from datetime import datetime
 import dbm.gnu
+import logging
 import requests
 import time
 
@@ -7,6 +8,7 @@ import settings
 from thread_tools import start_thread
 
 
+logger = logging.getLogger("lost.network")
 REQUEST_TIMEOUT = 8.0
 
 
@@ -58,22 +60,18 @@ class NetworkHandler:
         self.backlog = dbm.gnu.open('backlog.db', 'cs')
         self.time_next_backlog = 0
         self.time_last_sending = 0
-        self.logfile = open(settings.SMARTCARD_LOGFILE_PATH, mode='a', buffering=1)
 
     def shutdown(self):
         # TODO: Should use a context manager instead!
         # See https://realpython.com/python-with-statement/
-        self.logfile.close()
         self.backlog.close()
 
     def send_to_Lori(self, smartcard_id):
-        print(f"{datetime.now()} captured {smartcard_id}", file=self.logfile)
-
         # This should never kick in, but let's throttle the number of network
         # transmissions and simultaneous threads anyway.
         now = time.time()
         if now - self.time_last_sending < 0.5:
-            print("Throttling network transmissions, DROPPING data!", file=self.logfile)
+            logger.error(f"send_to_Lori: Throttling network transmissions, dropping {smartcard_id = }!")
             return
         self.time_last_sending = now
 
@@ -85,11 +83,16 @@ class NetworkHandler:
         # Add the user input that was made in the terminal.
         user_input.update(self.terminal.get_user_input())
 
+        logger.info(f"send_to_Lori:")
+        logger.info(f"    {user_input = }")
+
         is_backlog = False
         start_thread(post_stamp_event, (user_input, is_backlog), self.on_server_reply)
 
     def on_server_reply(self, user_input, result, network_success):
-        print(f"{datetime.now()} server reply: {result}", file=self.logfile)
+        logger.info(f"on_server_reply: {'success' if network_success else 'FAILURE'}")
+        logger.info(f"    {user_input = }")
+        logger.info(f"    {result = }")
 
         if not network_success:
             # Something went wrong with the network transmission. Very likely, the network

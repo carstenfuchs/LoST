@@ -1,3 +1,4 @@
+import logging
 import os
 import subprocess
 import time
@@ -8,6 +9,9 @@ from tkinter import font as tkfont
 # from tkinter import ttk
 
 import settings
+
+
+logger = logging.getLogger("lost.gui")
 
 
 class ColorProvider:
@@ -36,12 +40,12 @@ class FontProvider:
         self.win_size_factor = 16.0
         self.fonts = {}
 
-        # print("\nFont names:")
+        # logger.debug("\nFont names:")
         # for n in tkfont.names():
-        #     print(f"  {n:18s} {tkfont.nametofont(n).actual()}")
+        #     logger.debug(f"  {n:18s} {tkfont.nametofont(n).actual()}")
 
-        # print("\nFont families:")
-        # print(sorted(tkfont.families()))
+        # logger.debug("\nFont families:")
+        # logger.debug(sorted(tkfont.families()))
 
     def resize(self, window_height):
         """Updates the size of each font according to the new window height."""
@@ -57,7 +61,7 @@ class FontProvider:
         f = tkfont.nametofont('TkTextFont').copy()
         f.config(size=-int(self.win_size_factor * percent / 100.0))
 
-        print(f"Adding font size {percent} %")
+        logger.debug(f"Adding font size {percent} %")
         self.fonts[percent] = f
         return f
 
@@ -164,7 +168,7 @@ class PauseButtonsRow(Frame):
 
         if mdl_pause == 120 + 45 and text == '0:45':
             # A pause of 2:45 hours followed by a click on '0:45' opens the system panel.
-            print("Invoking the system panel.")
+            logger.info("Invoking the system panel.")
             self.winfo_toplevel().terminal.set_state_system_panel()
             return
 
@@ -434,11 +438,11 @@ class SystemPanelFrame(Frame):
         self.time_updated = time.time()
 
     def on_click_quit_program(self):
-        print("Quitting program.")
+        logger.info("Quitting program.")
         self.winfo_toplevel().destroy()
 
     def on_click_shutdown(self):
-        print("System shutdown initiated.")
+        logger.info("System shutdown initiated.")
         # The shutdown is delayed by one minute as that gives us a chance to gracefully
         # exit the program and the user a chance to cancel.
         subprocess.run(['shutdown', '--poweroff', '+1'])

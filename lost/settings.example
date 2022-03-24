@@ -5,6 +5,12 @@ from pathlib import Path
 # extra logging and psychedelic colors.
 DEBUG = False
 
+# Logging is employed in order to help with debugging, to provide auditability
+# and as a last resort to recover from interruptions of network connectivity.
+# Make sure the path is writable.
+# LOGFILE_PATH = '/var/log/LoST/lost.log'
+LOGFILE_PATH = Path(__file__).resolve().parent.parent / 'lost.log'
+
 # The terminal mode is one of the built-in modes of operation. At this time,
 # modes 'logistics' and 'office' are available.
 TERMINAL_MODE = 'office'
@@ -13,11 +19,6 @@ TERMINAL_MODE = 'office'
 # to the web server.
 TERMINAL_NAME = 'entrance'
 TERMINAL_PASSWORD = "insecure example password, don't use!"
-
-# In order to be able to recover from interruptions of network connectivity,
-# all outgoing and incoming data is logged. Make sure the path is writable.
-# SMARTCARD_LOGFILE_PATH = '/var/log/LoST/smartcards.log'
-SMARTCARD_LOGFILE_PATH = Path(__file__).resolve().parent.parent / 'smartcards.log'
 
 # The server address and URL that captured smartcard details are posted to.
 # To facilitate testing and development, use 'built-in' as the server name.

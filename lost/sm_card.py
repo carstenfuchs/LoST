@@ -1,7 +1,12 @@
+import logging
+
 from smartcard.CardMonitoring import CardMonitor, CardObserver
 from smartcard.util import toHexString
 
 from thread_tools import thread_queue
+
+
+logger = logging.getLogger("lost.smartcard")
 
 
 class SmartcardMonitor:
@@ -66,7 +71,7 @@ class LoSTCardObserver(CardObserver):
                 continue
 
             # The ATR can be decoded at https://smartcard-atr.apdu.fr/
-            print(f'Smartcard: [💳] user inserted card "{toHexString(card.atr)}"')
+            logger.info(f'[💳] user inserted card "{toHexString(card.atr)}"')
 
             card.connection = card.createConnection()
             card.connection.connect()
@@ -74,7 +79,7 @@ class LoSTCardObserver(CardObserver):
             card.connection.disconnect()
 
             success = sw1 in (0x90, 0x61)
-            print(f'Smartcard: [💳] read card UID: status 0x{sw1:02x} 0x{sw2:02x}, result "{toHexString(response)}"')
+            logger.info(f'[💳] read card UID: status 0x{sw1:02x} 0x{sw2:02x}, result "{toHexString(response)}"')
 
             # We are running in a worker thread of the `CardMonitor` here.
             # Thus, put the callback and the results into the queue, to be
@@ -82,4 +87,4 @@ class LoSTCardObserver(CardObserver):
             thread_queue.put((self.callback, (response, success)))
 
         for card in removedCards:
-            print(f'Smartcard: [--] user removed card "{toHexString(card.atr)}"')
+            logger.info(f'[--] user removed card "{toHexString(card.atr)}"')
