@@ -1,6 +1,6 @@
 from enum import Enum
 import time
-from modes.base_terminal import BaseTerminal
+from lost.modes.base_terminal import BaseTerminal
 
 
 class State(Enum):

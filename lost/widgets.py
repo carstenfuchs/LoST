@@ -8,7 +8,7 @@ from tkinter import *
 from tkinter import font as tkfont
 # from tkinter import ttk
 
-import settings
+from lost import settings
 
 
 logger = logging.getLogger("lost.gui")

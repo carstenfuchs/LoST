@@ -2,19 +2,19 @@
 import logging
 import queue
 
-import settings
-from network_handler import NetworkHandler
-from server import start_testserver
-from sm_card import SmartcardMonitor
-from thread_tools import thread_queue
+from lost import settings
+from lost.network_handler import NetworkHandler
+from lost.server import start_testserver
+from lost.sm_card import SmartcardMonitor
+from lost.thread_tools import thread_queue
 
 
 if settings.TERMINAL_MODE == 'logistics':
-    from modes.logistics_gui import RootWindow
-    from modes.logistics_terminal import Terminal
+    from lost.modes.logistics_gui import RootWindow
+    from lost.modes.logistics_terminal import Terminal
 elif settings.TERMINAL_MODE == 'office':
-    from modes.office_gui import RootWindow
-    from modes.office_terminal import Terminal
+    from lost.modes.office_gui import RootWindow
+    from lost.modes.office_terminal import Terminal
 else:
     assert False, "Unknown terminal mode."
 

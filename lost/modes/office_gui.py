@@ -3,8 +3,8 @@ from datetime import datetime
 from tkinter import *
 # from tkinter import ttk
 
-from modes.office_terminal import State
-from widgets import adjust_wraplength, cp, fp, DisplayServerReplyFrame, PauseButtonsRow, SystemPanelFrame, TitleBar, TouchButton, WaitForServerFrame
+from lost.modes.office_terminal import State
+from lost.widgets import adjust_wraplength, cp, fp, DisplayServerReplyFrame, PauseButtonsRow, SystemPanelFrame, TitleBar, TouchButton, WaitForServerFrame
 
 
 class RootWindow(Tk):

@@ -4,8 +4,8 @@ import logging
 import requests
 import time
 
-import settings
-from thread_tools import start_thread
+from lost import settings
+from lost.thread_tools import start_thread
 
 
 logger = logging.getLogger("lost.network")

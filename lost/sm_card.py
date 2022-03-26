@@ -3,7 +3,7 @@ import logging
 from smartcard.CardMonitoring import CardMonitor, CardObserver
 from smartcard.util import toHexString
 
-from thread_tools import thread_queue
+from lost.thread_tools import thread_queue
 
 
 logger = logging.getLogger("lost.smartcard")

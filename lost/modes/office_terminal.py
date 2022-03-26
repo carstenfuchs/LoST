@@ -1,5 +1,5 @@
 from enum import Enum
-from modes.base_terminal import BaseTerminal
+from lost.modes.base_terminal import BaseTerminal
 
 
 class State(Enum):
