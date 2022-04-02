@@ -34,22 +34,46 @@ def post_stamp_event(user_input, is_backlog):
             f"http://{SERVER_NAME}:{SERVER_PORT}{settings.SERVER_URL}",
             data=data,
             timeout=REQUEST_TIMEOUT,
+            allow_redirects=False,
             verify=False,
         )
+
+        # With `allow_redirects=True`, Requests turns POST requests that are
+        # redirected automatically into GET requests when following them:
+        #   - https://github.com/psf/requests/issues/3107
+        #   - https://github.com/psf/requests/issues/5494
+        # Therefore, we must implement POST-redirects ourselves.
+        count = 5
+        while count > 0 and r.status_code in (301, 302, 307, 308):
+            count -= 1
+            r = requests.post(
+                r.headers['Location'],
+                data=data,
+                timeout=REQUEST_TIMEOUT,
+                allow_redirects=False,
+                verify=False,
+            )
+
+    except requests.exceptions.ConnectionError as e:
+        return user_input, {'error': f"ConnectionError: {e}"}, False
+
     except requests.exceptions.Timeout as e:
-        return user_input, {'errors': [str(e)]}, False
+        return user_input, {'error': f"Timeout: {e}"}, False
+
+    except requests.exceptions.RequestException as e:
+        return user_input, {'error': f"RequestException: {e}"}, False
 
     if r.status_code != 200:
-        return user_input, {'errors': ["status != 200"]}, False
+        return user_input, {'error': f"The HTTP status response code was {r.status_code}, expected 200 (OK)."}, False
 
     try:
-        json = r.json()
+        json_dict = r.json()
     except requests.exceptions.JSONDecodeError as e:
-        return user_input, {'errors': [str(e)]}, True
+        return user_input, {'error': f"JSONDecodeError: {e}"}, False
 
     # The results of this thread are passed as parameters to the callback
     # in the main thread.
-    return user_input, json, True
+    return user_input, json_dict, True
 
 
 class NetworkHandler:
