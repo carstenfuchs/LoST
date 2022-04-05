@@ -81,6 +81,7 @@ class LoriRequestHandler(BaseHTTPRequestHandler):
         # print(data)
 
         # self.send_json({'success': "Hello from Lori!"})
+        data['echo_server_note'] = "This reply is an echo of the received data, plus this message."
         self.send_json(data)    # reply with echo
         return
 

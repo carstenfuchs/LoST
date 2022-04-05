@@ -1,10 +1,10 @@
-from datetime import datetime
 import dbm.gnu
+import json
 import logging
 import requests
-import time
 
 from lost import settings
+from lost.common import get_datetime_now, get_time_time
 from lost.thread_tools import start_thread
 
 
@@ -78,10 +78,10 @@ def post_stamp_event(user_input, is_backlog):
 
 class NetworkHandler:
 
-    def __init__(self, terminal):
+    def __init__(self, terminal, backlog_path='backlog.db'):
         # TODO: Can we employ connection pooling?
         self.terminal = terminal
-        self.backlog = dbm.gnu.open('backlog.db', 'cs')
+        self.backlog = dbm.gnu.open(backlog_path, 'cs')
         self.time_next_backlog = 0
         self.time_last_sending = 0
 
@@ -93,61 +93,100 @@ class NetworkHandler:
     def send_to_Lori(self, smartcard_id):
         # This should never kick in, but let's throttle the number of network
         # transmissions and simultaneous threads anyway.
-        now = time.time()
+        now = get_time_time()
         if now - self.time_last_sending < 0.5:
-            logger.error(f"send_to_Lori: Throttling network transmissions, dropping {smartcard_id = }!")
+            logger.error(f"send_to_Lori(): Throttling network transmissions, dropping {smartcard_id = }!")
+            logger.error(f"    {self.time_last_sending = }, {now = }")
             return
         self.time_last_sending = now
 
         user_input = {
             'smartcard_id': smartcard_id,
-            'local_ts': str(datetime.now()),  # local timestamp
+            'local_ts': str(get_datetime_now()),  # local timestamp
         }
 
         # Add the user input that was made in the terminal.
         user_input.update(self.terminal.get_user_input())
 
-        logger.info(f"send_to_Lori:")
+        logger.info(f"send_to_Lori():")
         logger.info(f"    {user_input = }")
 
         is_backlog = False
         start_thread(post_stamp_event, (user_input, is_backlog), self.on_server_reply)
 
+    def catch_up_backlog(self):
+        """If there is anything in the backlog, try to file it now."""
+        now = get_time_time()
+        if now < self.time_next_backlog:
+            return
+
+        # It is unclear in which order the keys are returned, for details see:
+        # https://docs.python.org/3/library/dbm.html#module-dbm.gnu
+        unique_id = self.backlog.firstkey()
+
+        if unique_id is None:
+            # The backlog is empty. Unless something else happens that overrides this,
+            # only try again much later.
+            logger.info(f"catch_up_backlog(): The backlog is empty.")
+            self.time_next_backlog = now + 24 * 3600
+            return
+
+        user_input_json = self.backlog[unique_id]
+        del self.backlog[unique_id]
+        self.backlog.sync()
+
+        try:
+            user_input = json.loads(user_input_json)
+        except json.JSONDecodeError as e:
+            logger.error(f"catch_up_backlog(): Invalid JSON in backlog: {e}")
+            logger.error(f"    backlog['{unique_id.decode()}'] = '{user_input_json.decode()}'")
+            self.time_next_backlog = now + 1
+            return
+
+        # Actually re-send old user input from the backlog.
+        # Note that the interruption of network connectivity that caused the original
+        # transmission to fail might still persist and thus cause new transmissions to
+        # fail as well. Therefore, don't send items in the backlog in an overly quick
+        # succession: They would just get reinserted.
+        self.time_next_backlog = now + 2*REQUEST_TIMEOUT
+
+        logger.info(f"catch_up_backlog():")
+        logger.info(f"    {user_input = }")
+
+        is_backlog = True
+        start_thread(post_stamp_event, (user_input, is_backlog), self.on_server_reply)
+
     def on_server_reply(self, user_input, result, network_success):
-        logger.info(f"on_server_reply: {'success' if network_success else 'FAILURE'}")
+        """
+        A thread that was running `requests.post()` has finished with reply or error.
+        """
+        logger.info(f"on_server_reply():")
+        logger.info(f"    {network_success = }")
         logger.info(f"    {user_input = }")
         logger.info(f"    {result = }")
 
         if not network_success:
             # Something went wrong with the network transmission. Very likely, the network
-            # connectivity was interrupted, the transmission timed out and the Lori server
-            # never received the message. Thus, try again later.
-            now = time.time()
+            # connectivity was interrupted and the transmission timed out.
+            # In any case, we assume that the Lori server never received the message.
+            #
+            # No matter if this was the first attempt while the user is still standing in
+            # front of the terminal or an attempt to catch up with the backlog days later,
+            # let's put the issue into the backlog to try again later.
+            if len(self.backlog) > 10000:
+                pass
+
+            # TODO: Add message for user that it will be auto-retried later.
+            now = time.time()   ######################
             unique_id = user_input['local_ts']
             self.backlog[unique_id] = json.dumps(user_input)
             self.backlog.sync()
-            self.time_next_backlog = max(self.time_next_backlog, now + 300.0)
+            self.time_next_backlog = now + 300.0
 
-        # if the user_input['local_ts'] is older than 1 minute:
-        #     # Either don't show anything at all or just show something simple, such as
-        #     # "Backlog: Eingabe zur Mitarbeiterkarte 1234 von 11:11 Uhr erfolgreich nachgetragen."
-        #     return
+        if False: #was_backlogged:
+            # This is the reply to a message that was re-sent from the backlog.
+            # No matter if it was a success or a failure: the user has long left and no one
+            # is watching the terminal's screen, so don't bother to update it.
+            return
 
         self.terminal.on_server_reply_received(result)
-
-    def catch_up_backlog(self):
-        """If there is anything in the backlog, try to file it now."""
-        if not self.backlog:
-            return
-
-        now = time.time()
-        if now < self.time_next_backlog:
-            return
-
-        unique_id, user_input_json = self.backlog.popitem()   # LIFO, unfortunately.
-        self.backlog.sync()
-        self.time_next_backlog = max(self.time_next_backlog, now + 2*REQUEST_TIMEOUT)
-
-        user_input = json.load(user_input_json)
-        is_backlog = True
-        start_thread(post_stamp_event, (user_input, is_backlog), self.on_server_reply)
