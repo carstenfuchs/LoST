@@ -12,7 +12,7 @@ logger = logging.getLogger("lost.network")
 REQUEST_TIMEOUT = 8.0
 
 
-def post_stamp_event(user_input, is_backlog):
+def post_stamp_event(user_input):
     """Sends the smartcard details in a POST request to the server."""
     SERVER_NAME = settings.SERVER_ADDRESS[0]
     SERVER_PORT = settings.SERVER_ADDRESS[1]
@@ -25,7 +25,6 @@ def post_stamp_event(user_input, is_backlog):
         {
             'terminal_name': settings.TERMINAL_NAME,
             'terminal_pwd': settings.TERMINAL_PASSWORD,
-            'is_backlog': is_backlog,
         }
     )
 
@@ -103,6 +102,7 @@ class NetworkHandler:
         user_input = {
             'smartcard_id': smartcard_id,
             'local_ts': str(get_datetime_now()),  # local timestamp
+            'backlog_count': 0,
         }
 
         # Add the user input that was made in the terminal.
@@ -111,8 +111,7 @@ class NetworkHandler:
         logger.info(f"send_to_Lori():")
         logger.info(f"    {user_input = }")
 
-        is_backlog = False
-        start_thread(post_stamp_event, (user_input, is_backlog), self.on_server_reply)
+        start_thread(post_stamp_event, (user_input,), self.on_server_reply)
 
     def catch_up_backlog(self):
         """If there is anything in the backlog, try to file it now."""
@@ -153,40 +152,52 @@ class NetworkHandler:
         logger.info(f"catch_up_backlog():")
         logger.info(f"    {user_input = }")
 
-        is_backlog = True
-        start_thread(post_stamp_event, (user_input, is_backlog), self.on_server_reply)
+        start_thread(post_stamp_event, (user_input,), self.on_server_reply)
 
     def on_server_reply(self, user_input, result, network_success):
         """
-        A thread that was running `requests.post()` has finished with reply or error.
+        A thread that was running `requests.post()` has finished with a reply or an error.
         """
         logger.info(f"on_server_reply():")
         logger.info(f"    {network_success = }")
         logger.info(f"    {user_input = }")
         logger.info(f"    {result = }")
 
-        if not network_success:
-            # Something went wrong with the network transmission. Very likely, the network
-            # connectivity was interrupted and the transmission timed out.
-            # In any case, we assume that the Lori server never received the message.
-            #
-            # No matter if this was the first attempt while the user is still standing in
-            # front of the terminal or an attempt to catch up with the backlog days later,
-            # let's put the issue into the backlog to try again later.
-            if len(self.backlog) > 10000:
-                pass
+        was_backlogged = (user_input['backlog_count'] > 0)
 
-            # TODO: Add message for user that it will be auto-retried later.
-            now = time.time()   ######################
-            unique_id = user_input['local_ts']
-            self.backlog[unique_id] = json.dumps(user_input)
+        if not network_success:
+            # Something went wrong with the network transmission. For example, the network
+            # connectivity might have been interrupted and the transmission timed out.
+            # In any case, we must assume that the Lori server never received the message.
+            # No matter if this was the first attempt of a user who is still attending the
+            # terminal or an attempt to catch up with the backlog days later, we must put
+            # the issue into the backlog to try again later.
+
+            # if len(self.backlog) > 10000:
+            #     pass
+
+            user_input['backlog_count'] += 1
+
+            now = get_time_time()
+            unique_id = str(now)
+            user_input_json = json.dumps(user_input)
+            logger.info(f"    --> backlog['{unique_id}'] = '{user_input_json}'")
+
+            self.backlog[unique_id] = user_input_json
             self.backlog.sync()
             self.time_next_backlog = now + 300.0
 
-        if False: #was_backlogged:
-            # This is the reply to a message that was re-sent from the backlog.
-            # No matter if it was a success or a failure: the user has long left and no one
-            # is watching the terminal's screen, so don't bother to update it.
+            result['extra_message'] = (
+                "Der Lori-Server konnte nicht erreicht und die Eingabe demzufolge "
+                "nicht verarbeitet werden. Die Eingabe wurde aber aufgezeichnet "
+                "und die Verarbeitung wird sobald wie möglich automatisch nachgeholt."
+            )
+
+        if was_backlogged:
+            # This is the reply to user input that was re-sent from the backlog.
+            # No matter if it was now a success or another failure: the user has long left
+            # and no one is watching the terminal's screen, so don't bother updating it.
+            logger.info(f"    --> not updating the terminal")
             return
 
         self.terminal.on_server_reply_received(result)

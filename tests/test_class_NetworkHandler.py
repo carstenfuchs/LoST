@@ -20,10 +20,7 @@ class Test_post_stamp_event(BuiltinServerTestCase):
             'pause': None,
         }
 
-        user_out, result, network_success = post_stamp_event(
-            user_input=user_in,
-            is_backlog=False,
-        )
+        user_out, result, network_success = post_stamp_event(user_input=user_in)
 
         # The `post_stamp_event()` function always returns the user input that it got
         # in the first place. This is necessary because it usually runs within a thread
@@ -126,7 +123,6 @@ class Test_post_stamp_event(BuiltinServerTestCase):
         expected = user_out.copy()
         expected.update(
             {
-                "is_backlog": "False",
                 "terminal_name": "Buchhaltung",
                 "terminal_pwd": "vf6r4cnf3 password for testing only, don't use!",
                 "echo_server_note": "This reply is an echo of the received data, plus this message.",
@@ -140,6 +136,9 @@ class Test_post_stamp_event(BuiltinServerTestCase):
 
 class TestTerminal(BaseTerminal):
     """A minimal implementation of the `BaseTerminal`, just as required for tests."""
+
+    def __init__(self):
+        self.last_server_reply = None
 
     def get_user_input(self):
         return {
@@ -183,7 +182,7 @@ class Test_NetworkHandler_sending(BuiltinServerTestCase):
             cm.output,
             [
                 "INFO:lost.network:send_to_Lori():",
-                "INFO:lost.network:    user_input = {'smartcard_id': 'brand-new smartcard', 'local_ts': '2022-04-02 18:12:00', 'department': 'Test Labs', 'pause': 30}",
+                "INFO:lost.network:    user_input = {'smartcard_id': 'brand-new smartcard', 'local_ts': '2022-04-02 18:12:00', 'backlog_count': 0, 'department': 'Test Labs', 'pause': 30}",
             ],
         )
 
@@ -199,6 +198,7 @@ class Test_NetworkHandler_sending(BuiltinServerTestCase):
                 # These were directly from `send_to_Lori()`.
                 'smartcard_id': "brand-new smartcard",
                 'local_ts': "2022-04-02 18:12:00",
+                'backlog_count': 0,
                 # These were added by the terminal's `get_user_input()`.
                 'department': "Test Labs",
                 'pause': 30,
@@ -213,13 +213,13 @@ class Test_NetworkHandler_sending(BuiltinServerTestCase):
                 # These were directly from `send_to_Lori()`.
                 'smartcard_id': "brand-new smartcard",
                 'local_ts': "2022-04-02 18:12:00",
+                'backlog_count': "0",
                 # These were added by the terminal's `get_user_input()`.
                 'department': "Test Labs",
                 'pause': '30',
                 # These were added by the `post_stamp_event()` function.
                 'terminal_name': "Buchhaltung",
                 'terminal_pwd': "vf6r4cnf3 password for testing only, don't use!",
-                'is_backlog': 'False',
                 # This was added by the echo server.
                 'echo_server_note': "This reply is an echo of the received data, plus this message.",
             }
@@ -246,11 +246,11 @@ class Test_NetworkHandler_sending(BuiltinServerTestCase):
             cm.output,
             [
                 "INFO:lost.network:send_to_Lori():",
-                "INFO:lost.network:    user_input = {'smartcard_id': 'brand-new smartcard', 'local_ts': '2022-04-02 18:12:00', 'department': 'Test Labs', 'pause': 30}",
+                "INFO:lost.network:    user_input = {'smartcard_id': 'brand-new smartcard', 'local_ts': '2022-04-02 18:12:00', 'backlog_count': 0, 'department': 'Test Labs', 'pause': 30}",
                 "ERROR:lost.network:send_to_Lori(): Throttling network transmissions, dropping smartcard_id = 'brand-new smartcard'!",
                 "ERROR:lost.network:    self.time_last_sending = 3, now = 3.4",
                 "INFO:lost.network:send_to_Lori():",
-                "INFO:lost.network:    user_input = {'smartcard_id': 'brand-new smartcard', 'local_ts': '2022-04-02 18:12:00.600000', 'department': 'Test Labs', 'pause': 30}",
+                "INFO:lost.network:    user_input = {'smartcard_id': 'brand-new smartcard', 'local_ts': '2022-04-02 18:12:00.600000', 'backlog_count': 0, 'department': 'Test Labs', 'pause': 30}",
             ],
         )
 
@@ -331,7 +331,6 @@ class Test_NetworkHandler_sending(BuiltinServerTestCase):
                 # These were added by the `post_stamp_event()` function.
                 'terminal_name': "Buchhaltung",
                 'terminal_pwd': "vf6r4cnf3 password for testing only, don't use!",
-                'is_backlog': 'True',
                 # This was added by the echo server.
                 'echo_server_note': "This reply is an echo of the received data, plus this message.",
             }
@@ -370,11 +369,14 @@ class Test_NetworkHandler_other(TestCase):
         self.nwh.shutdown()
         self.nwh = NetworkHandler(self.trm, backlog_path=str(self.backlog_path))
 
-        self.assertEqual(self.nwh.backlog['is persistent'], s.encode())
+        self.assertEqual(
+            self.nwh.backlog['is persistent'],
+            b"This must still be there in a new `NetworkHandler` instance!",
+        )
 
     def test_successful_server_reply(self):
-        user_input = "not used in this test"
-        result = "passed to the terminal"
+        user_input = {'backlog_count': 0}
+        result = "normally a JSON-decoded dict from Lori, passed to the terminal"
         success = True
 
         with self.assertLogs(logger="lost", level=logging.DEBUG) as cm:
@@ -385,8 +387,82 @@ class Test_NetworkHandler_other(TestCase):
             [
                 "INFO:lost.network:on_server_reply():",
                 "INFO:lost.network:    network_success = True",
-                "INFO:lost.network:    user_input = 'not used in this test'",
-                "INFO:lost.network:    result = 'passed to the terminal'",
+                "INFO:lost.network:    user_input = {'backlog_count': 0}",
+                "INFO:lost.network:    result = 'normally a JSON-decoded dict from Lori, passed to the terminal'",
             ],
         )
-        self.assertEqual(self.trm.last_server_reply, result)
+        self.assertEqual(self.trm.last_server_reply, "normally a JSON-decoded dict from Lori, passed to the terminal")
+
+    def test_first_input_but_broken_connection(self):
+        user_input = {'backlog_count': 0}
+        result = {'error': 'some error message'}
+        success = False
+
+        with self.assertLogs(logger="lost", level=logging.DEBUG) as cm:
+            self.nwh.on_server_reply(user_input, result, success)
+
+        self.assertEqual(
+            cm.output,
+            [
+                "INFO:lost.network:on_server_reply():",
+                "INFO:lost.network:    network_success = False",
+                "INFO:lost.network:    user_input = {'backlog_count': 0}",
+                "INFO:lost.network:    result = {'error': 'some error message'}",
+                "INFO:lost.network:    --> backlog['3'] = '{\"backlog_count\": 1}'",
+            ],
+        )
+        self.assertEqual(self.nwh.time_next_backlog, 3 + 300)
+        self.assertEqual(
+            self.trm.last_server_reply,
+            {
+                'error': 'some error message',
+                'extra_message': (
+                    "Der Lori-Server konnte nicht erreicht und die Eingabe demzufolge "
+                    "nicht verarbeitet werden. Die Eingabe wurde aber aufgezeichnet "
+                    "und die Verarbeitung wird sobald wie möglich automatisch nachgeholt."
+                ),
+            }
+        )
+
+    def test_backlog_successfully_processed(self):
+        user_input = {'backlog_count': 1}
+        result = {'msg': 'success data from Lori'}
+        success = True
+
+        with self.assertLogs(logger="lost", level=logging.DEBUG) as cm:
+            self.nwh.on_server_reply(user_input, result, success)
+
+        self.assertEqual(
+            cm.output,
+            [
+                "INFO:lost.network:on_server_reply():",
+                "INFO:lost.network:    network_success = True",
+                "INFO:lost.network:    user_input = {'backlog_count': 1}",
+                "INFO:lost.network:    result = {'msg': 'success data from Lori'}",
+                "INFO:lost.network:    --> not updating the terminal",
+            ],
+        )
+        self.assertIsNone(self.trm.last_server_reply)
+
+    def test_backlog_backlogged(self):
+        user_input = {'backlog_count': 1}
+        result = {'error': 'some error message'}
+        success = False
+
+        with self.assertLogs(logger="lost", level=logging.DEBUG) as cm:
+            self.nwh.on_server_reply(user_input, result, success)
+
+        self.assertEqual(
+            cm.output,
+            [
+                "INFO:lost.network:on_server_reply():",
+                "INFO:lost.network:    network_success = False",
+                "INFO:lost.network:    user_input = {'backlog_count': 1}",
+                "INFO:lost.network:    result = {'error': 'some error message'}",
+                "INFO:lost.network:    --> backlog['3'] = '{\"backlog_count\": 2}'",
+                "INFO:lost.network:    --> not updating the terminal",
+            ],
+        )
+        self.assertIsNone(self.trm.last_server_reply)
+        self.assertEqual(self.nwh.time_next_backlog, 3 + 300)
+        self.assertIsNone(self.trm.last_server_reply)
