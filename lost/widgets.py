@@ -362,7 +362,7 @@ class DisplayServerReplyFrame(Frame):
             self.body_grid.grid()
             self.msg_label.config(text="")
             self.border_bottom.config(background='#00FF66')
-            self.extra_msg_label.config(text=feedback.get('pause_error'))
+            self.extra_msg_label.config(text=feedback.get('pause_error', ""))
         elif 'messages' in lsr:
             # Das Einscannen der Karte hat zwar nicht zu einer Aufzeichnung
             # eines Timestamps geführt, aber es handelte sich trotzdem um eine
@@ -372,7 +372,7 @@ class DisplayServerReplyFrame(Frame):
             self.msg_label.config(text="\n".join(lsr['messages']))
             self.msg_label.grid()
             self.border_bottom.config(background='#FFFF00')
-            self.extra_msg_label.config(text="")
+            self.extra_msg_label.config(text=lsr.get('detail_info', ""))
         else:   # 'errors' in lsr
             # Das Vorhandensein von 'errors' bedeutet, dass ein technisches
             # Problem das Auswerten der Karte verhindert hat. Das Einlesen
@@ -382,7 +382,7 @@ class DisplayServerReplyFrame(Frame):
             self.msg_label.config(text="\n".join(lsr.get('errors', [""])) or "Die Ursache dieses Problems konnte nicht festgestellt werden.")
             self.msg_label.grid()
             self.border_bottom.config(background='#FF0000')
-            self.extra_msg_label.config(text="Die Karte wurde korrekt eingelesen und aufgezeichnet. Die Übertragung wird bei nächster Gelegenheit automatisch nachgeholt.")
+            self.extra_msg_label.config(text=lsr.get('detail_info', ""))
 
     def on_click_OK(self):
         self.winfo_toplevel().terminal.set_state_welcome()

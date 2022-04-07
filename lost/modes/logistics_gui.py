@@ -23,27 +23,43 @@ class RootWindow(Tk):
         self.geometry("800x480")
 
         if True:  # if localconfig.DEBUG:
-            success_data = {
-                'ma': "Konrad Zuse (F1234)",
+            success_reply = {
+                'ma': "Konrad Zuse (lokales erzeugtes Beispiel)",
                 'now': "not used at this time",
                 'feedback': {
                     'anfang': "8:00",
                     'ende': None,
                     'pause': None,
-                    'pause_error': "Die Pausenzeit fehlt.",
+                    'pause_error': "Eine Netzwerkübertragung hat nicht stattgefunden.",
                     'result': None,
                 },
             }
-            messages = ["Die Karte wurde erfolgreich eingelesen und ordentlich und regelkonform verarbeitet. Das Ergebnis hat allerdings nicht zu einer Zeitmeldung geführt, sondern es lagen besondere Umstände vor, die hier gemeldet werden. (Beispiele: neue Karte, gesperrte Karte, …)"]
-            errors = ["Ein technisches Problem hat das Auswerten der Karte verhindert. Das Einlesen wurde mit aktuellen Zeitpunkt aufgezeichnet und die Verarbeitung wird nach der Lösung des Problems automatisch nachgeholt."]
+
+            messages_reply = {
+                'messages': [
+                    "Dies ist ein Beispiel für eine Rückmeldung vom Lori-Server vom " \
+                    "Typ „messages“. Dazu wurde eine auf dem Terminal vorbereitete " \
+                    "Antwort eingestellt, eine echte Netzwerkübertragung hat nicht stattgefunden.",
+                ],
+            }
+
+            errors_reply = {
+                'errors': [
+                    "Dies ist ein Beispiel für eine Meldung vom Typ „errors“. "
+                    "Sie kann lokal vom Terminal oder vom Lori-Server ausgehen. "
+                    "Dazu wurde eine auf dem Terminal vorbereitete Antwort eingestellt, "
+                    "eine echte Netzwerkübertragung hat nicht stattgefunden.",
+                ],
+                'detail_info': "optionale Detailangaben, z.B. Timeout, unbekanntes Terminal o.ä.",
+            }
 
             self.bind('<Escape>', lambda x: self.destroy() if self.terminal.state == State.WELCOME else self.terminal.set_state(State.WELCOME))
             self.bind('<F1>', lambda x: self.terminal.set_state(State.WELCOME))
             self.bind('<F2>', lambda x: self.terminal.set_state(State.ENTER_START_OF_WORK_DETAILS))
             self.bind('<F3>', lambda x: self.terminal.set_state(State.ENTER_END_OF_WORK_DETAILS))
-            self.bind('<F5>', lambda x: self.terminal.on_server_reply_received(success_data))
-            self.bind('<F6>', lambda x: self.terminal.on_server_reply_received({'messages': messages}))
-            self.bind('<F7>', lambda x: self.terminal.on_server_reply_received({'errors': errors}))
+            self.bind('<F5>', lambda x: self.terminal.on_server_reply_received(success_reply))
+            self.bind('<F6>', lambda x: self.terminal.on_server_reply_received(messages_reply))
+            self.bind('<F7>', lambda x: self.terminal.on_server_reply_received(errors_reply))
             self.bind('<F8>', lambda x: self.terminal.on_server_reply_received({}))
             self.bind('<F9>', lambda x: self.main_con.simulate_smartcard_input('ABCD'))
           # self.bind('<F10>', lambda x: self.main_con.simulate_server_reply())
