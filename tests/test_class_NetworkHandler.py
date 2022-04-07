@@ -20,38 +20,36 @@ class Test_post_stamp_event(BuiltinServerTestCase):
             'pause': None,
         }
 
-        user_out, result, network_success = post_stamp_event(user_input=user_in)
+        user_out, result, network_error = post_stamp_event(user_input=user_in)
 
         # The `post_stamp_event()` function always returns the user input that it got
         # in the first place. This is necessary because it usually runs within a thread
         # and the user input must still be known when the thread returns.
         self.assertEqual(user_out, user_in)
 
-        return user_out, result, network_success
+        return user_out, result, network_error
 
     def test_no_connection(self):
         old_address = settings.SERVER_ADDRESS
         settings.SERVER_ADDRESS = ('unknownhost', 80)
 
-        user_out, result, network_success = self.send_post()
+        user_out, result, network_error = self.send_post()
         settings.SERVER_ADDRESS = old_address
 
-        self.assertEqual(list(result.keys()), ['error'])
-        self.assertIn("ConnectionError:", result['error'])
-        self.assertIn("Failed to establish a new connection: [Errno -2] Name or service not known", result['error'])
-        self.assertIs(network_success, False)
+        self.assertEqual(result, {})
+        self.assertIn("ConnectionError:", network_error)
+        self.assertIn("Failed to establish a new connection: [Errno -2] Name or service not known", network_error)
 
     def test_bad_port(self):
         old_address = settings.SERVER_ADDRESS
         settings.SERVER_ADDRESS = ('localhost', 9999)
 
-        user_out, result, network_success = self.send_post()
+        user_out, result, network_error = self.send_post()
         settings.SERVER_ADDRESS = old_address
 
-        self.assertEqual(list(result.keys()), ['error'])
-        self.assertIn("ConnectionError:", result['error'])
-        self.assertIn("Failed to establish a new connection: [Errno 111] Connection refused", result['error'])
-        self.assertIs(network_success, False)
+        self.assertEqual(result, {})
+        self.assertIn("ConnectionError:", network_error)
+        self.assertIn("Failed to establish a new connection: [Errno 111] Connection refused", network_error)
 
     def test_timeout(self):
         old_timeout = network_handler.REQUEST_TIMEOUT
@@ -59,64 +57,60 @@ class Test_post_stamp_event(BuiltinServerTestCase):
         old_url = settings.SERVER_URL
         settings.SERVER_URL = '/timeout/'
 
-        user_out, result, network_success = self.send_post()
+        user_out, result, network_error = self.send_post()
         network_handler.REQUEST_TIMEOUT = old_timeout
         settings.SERVER_URL = old_url
 
-        self.assertEqual(list(result.keys()), ['error'])
-        self.assertIn("Timeout:", result['error'])
-        self.assertIn("Read timed out. (read timeout=0.001)", result['error'])
-        self.assertIs(network_success, False)
+        self.assertEqual(result, {})
+        self.assertIn("Timeout:", network_error)
+        self.assertIn("Read timed out. (read timeout=0.001)", network_error)
 
     def test_RequestException(self):
         old_address = settings.SERVER_ADDRESS
         settings.SERVER_ADDRESS = ('', 80)
 
-        user_out, result, network_success = self.send_post()
+        user_out, result, network_error = self.send_post()
         settings.SERVER_ADDRESS = old_address
 
-        self.assertEqual(list(result.keys()), ['error'])
-        self.assertIn("RequestException: Invalid URL", result['error'])
-        self.assertIn("No host supplied", result['error'])
-        self.assertIs(network_success, False)
+        self.assertEqual(result, {})
+        self.assertIn("RequestException: Invalid URL", network_error)
+        self.assertIn("No host supplied", network_error)
 
     def test_redirect(self):
         old_url = settings.SERVER_URL
         settings.SERVER_URL = '/old/path/now/redirected/'
 
-        user_out, result, network_success = self.send_post()
+        user_out, result, network_error = self.send_post()
         settings.SERVER_URL = old_url
 
         self.assertEqual(result, {'success': 'The redirect went well!'})
-        self.assertIs(network_success, True)
+        self.assertIsNone(network_error)
 
     def test_wrong_url_404(self):
         """Even if the server is accessible, the URL might still not exist."""
         old_url = settings.SERVER_URL
         settings.SERVER_URL = '/wrong/path/'
 
-        user_out, result, network_success = self.send_post()
+        user_out, result, network_error = self.send_post()
         settings.SERVER_URL = old_url
 
-        self.assertEqual(list(result.keys()), ['error'])
-        self.assertIn("The HTTP status response code was 404, expected 200 (OK).", result['error'])
-        self.assertIs(network_success, False)
+        self.assertEqual(result, {})
+        self.assertIn("The HTTP status response code was 404, expected 200 (OK).", network_error)
 
     def test_unexpected_reply(self):
         """Even if we receive a reply, it might be something that is not JSON, e.g. HTML."""
         old_url = settings.SERVER_URL
         settings.SERVER_URL = '/non-json-reply/'
 
-        user_out, result, network_success = self.send_post()
+        user_out, result, network_error = self.send_post()
         settings.SERVER_URL = old_url
 
-        self.assertEqual(list(result.keys()), ['error'])
-        self.assertIn("JSONDecodeError:", result['error'])
-        self.assertIs(network_success, False)
+        self.assertEqual(result, {})
+        self.assertIn("JSONDecodeError:", network_error)
 
     def test_all_OK(self):
         """Makes sure that a plain round-trip without errors is possible."""
-        user_out, result, network_success = self.send_post()
+        user_out, result, network_error = self.send_post()
 
         # The test server just echoes the received data.
         # Note that the `pause` was never sent and that value `False` was turned into a string.
@@ -131,7 +125,7 @@ class Test_post_stamp_event(BuiltinServerTestCase):
         del expected['pause']
 
         self.assertEqual(result, expected)
-        self.assertIs(network_success, True)
+        self.assertIsNone(network_error)
 
 
 class TestTerminal(BaseTerminal):
@@ -187,7 +181,7 @@ class Test_NetworkHandler_sending(BuiltinServerTestCase):
         )
 
         callback, args = thread_queue.get(block=True)
-        (user_input, result, network_success) = args
+        (user_input, result, network_error) = args
 
         # The `user_input` was assembled in `send_to_Lori()`, passed into the
         # `post_stamp_event()` thread and passed back from it unchanged, just in case
@@ -226,7 +220,7 @@ class Test_NetworkHandler_sending(BuiltinServerTestCase):
         )
 
         self.assertEqual(callback, self.nwh.on_server_reply)
-        self.assertIs(network_success, True)
+        self.assertIsNone(network_error)
 
     def test_throttling_sends_and_threads(self):
         with self.assertLogs(logger="lost", level=logging.DEBUG) as cm:
@@ -313,7 +307,7 @@ class Test_NetworkHandler_sending(BuiltinServerTestCase):
         self.assertEqual(self.nwh.time_next_backlog, 3 + 16)
 
         callback, args = thread_queue.get(block=True)
-        (user_input, result, network_success) = args
+        (user_input, result, network_error) = args
 
         # What went into the backlog made it well to the server (and back).
         self.assertEqual(user_input, backlogged_user_input)
@@ -337,7 +331,7 @@ class Test_NetworkHandler_sending(BuiltinServerTestCase):
         )
 
         self.assertEqual(callback, self.nwh.on_server_reply)
-        self.assertIs(network_success, True)
+        self.assertIsNone(network_error)
 
 
 class Test_NetworkHandler_other(TestCase):
@@ -377,17 +371,17 @@ class Test_NetworkHandler_other(TestCase):
     def test_successful_server_reply(self):
         user_input = {'backlog_count': 0}
         result = "normally a JSON-decoded dict from Lori, passed to the terminal"
-        success = True
+        network_error = None
 
         with self.assertLogs(logger="lost", level=logging.DEBUG) as cm:
-            self.nwh.on_server_reply(user_input, result, success)
+            self.nwh.on_server_reply(user_input, result, network_error)
 
         self.assertEqual(
             cm.output,
             [
                 "INFO:lost.network:on_server_reply():",
-                "INFO:lost.network:    network_success = True",
                 "INFO:lost.network:    user_input = {'backlog_count': 0}",
+                "INFO:lost.network:    network_error = None",
                 "INFO:lost.network:    result = 'normally a JSON-decoded dict from Lori, passed to the terminal'",
             ],
         )
@@ -395,19 +389,19 @@ class Test_NetworkHandler_other(TestCase):
 
     def test_first_input_but_broken_connection(self):
         user_input = {'backlog_count': 0}
-        result = {'error': 'some error message'}
-        success = False
+        result = {}
+        network_error = "some error message"
 
         with self.assertLogs(logger="lost", level=logging.DEBUG) as cm:
-            self.nwh.on_server_reply(user_input, result, success)
+            self.nwh.on_server_reply(user_input, result, network_error)
 
         self.assertEqual(
             cm.output,
             [
                 "INFO:lost.network:on_server_reply():",
-                "INFO:lost.network:    network_success = False",
                 "INFO:lost.network:    user_input = {'backlog_count': 0}",
-                "INFO:lost.network:    result = {'error': 'some error message'}",
+                "INFO:lost.network:    network_error = 'some error message'",
+                "INFO:lost.network:    result = {}",
                 "INFO:lost.network:    --> backlog['3'] = '{\"backlog_count\": 1}'",
             ],
         )
@@ -415,29 +409,29 @@ class Test_NetworkHandler_other(TestCase):
         self.assertEqual(
             self.trm.last_server_reply,
             {
-                'error': 'some error message',
-                'extra_message': (
+                'errors': [(
                     "Der Lori-Server konnte nicht erreicht und die Eingabe demzufolge "
                     "nicht verarbeitet werden. Die Eingabe wurde aber aufgezeichnet "
                     "und die Verarbeitung wird sobald wie möglich automatisch nachgeholt."
-                ),
+                )],
+                'detail_info': 'some error message',
             }
         )
 
     def test_backlog_successfully_processed(self):
         user_input = {'backlog_count': 1}
         result = {'msg': 'success data from Lori'}
-        success = True
+        network_error = None
 
         with self.assertLogs(logger="lost", level=logging.DEBUG) as cm:
-            self.nwh.on_server_reply(user_input, result, success)
+            self.nwh.on_server_reply(user_input, result, network_error)
 
         self.assertEqual(
             cm.output,
             [
                 "INFO:lost.network:on_server_reply():",
-                "INFO:lost.network:    network_success = True",
                 "INFO:lost.network:    user_input = {'backlog_count': 1}",
+                "INFO:lost.network:    network_error = None",
                 "INFO:lost.network:    result = {'msg': 'success data from Lori'}",
                 "INFO:lost.network:    --> not updating the terminal",
             ],
@@ -446,19 +440,19 @@ class Test_NetworkHandler_other(TestCase):
 
     def test_backlog_backlogged(self):
         user_input = {'backlog_count': 1}
-        result = {'error': 'some error message'}
-        success = False
+        result = {}
+        network_error = 'some error message'
 
         with self.assertLogs(logger="lost", level=logging.DEBUG) as cm:
-            self.nwh.on_server_reply(user_input, result, success)
+            self.nwh.on_server_reply(user_input, result, network_error)
 
         self.assertEqual(
             cm.output,
             [
                 "INFO:lost.network:on_server_reply():",
-                "INFO:lost.network:    network_success = False",
                 "INFO:lost.network:    user_input = {'backlog_count': 1}",
-                "INFO:lost.network:    result = {'error': 'some error message'}",
+                "INFO:lost.network:    network_error = 'some error message'",
+                "INFO:lost.network:    result = {}",
                 "INFO:lost.network:    --> backlog['3'] = '{\"backlog_count\": 2}'",
                 "INFO:lost.network:    --> not updating the terminal",
             ],

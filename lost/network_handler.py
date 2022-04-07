@@ -54,25 +54,25 @@ def post_stamp_event(user_input):
             )
 
     except requests.exceptions.ConnectionError as e:
-        return user_input, {'error': f"ConnectionError: {e}"}, False
+        return user_input, {}, f"ConnectionError: {e}"
 
     except requests.exceptions.Timeout as e:
-        return user_input, {'error': f"Timeout: {e}"}, False
+        return user_input, {}, f"Timeout: {e}"
 
     except requests.exceptions.RequestException as e:
-        return user_input, {'error': f"RequestException: {e}"}, False
+        return user_input, {}, f"RequestException: {e}"
 
     if r.status_code != 200:
-        return user_input, {'error': f"The HTTP status response code was {r.status_code}, expected 200 (OK)."}, False
+        return user_input, {}, f"The HTTP status response code was {r.status_code}, expected 200 (OK)."
 
     try:
         json_dict = r.json()
     except requests.exceptions.JSONDecodeError as e:
-        return user_input, {'error': f"JSONDecodeError: {e}"}, False
+        return user_input, {}, f"JSONDecodeError: {e}"
 
     # The results of this thread are passed as parameters to the callback
     # in the main thread.
-    return user_input, json_dict, True
+    return user_input, json_dict, None
 
 
 class NetworkHandler:
@@ -154,18 +154,18 @@ class NetworkHandler:
 
         start_thread(post_stamp_event, (user_input,), self.on_server_reply)
 
-    def on_server_reply(self, user_input, result, network_success):
+    def on_server_reply(self, user_input, result, network_error):
         """
         A thread that was running `requests.post()` has finished with a reply or an error.
         """
         logger.info(f"on_server_reply():")
-        logger.info(f"    {network_success = }")
         logger.info(f"    {user_input = }")
+        logger.info(f"    {network_error = }")
         logger.info(f"    {result = }")
 
         was_backlogged = (user_input['backlog_count'] > 0)
 
-        if not network_success:
+        if network_error:
             # Something went wrong with the network transmission. For example, the network
             # connectivity might have been interrupted and the transmission timed out.
             # In any case, we must assume that the Lori server never received the message.
@@ -187,11 +187,14 @@ class NetworkHandler:
             self.backlog.sync()
             self.time_next_backlog = now + 300.0
 
-            result['extra_message'] = (
-                "Der Lori-Server konnte nicht erreicht und die Eingabe demzufolge "
-                "nicht verarbeitet werden. Die Eingabe wurde aber aufgezeichnet "
-                "und die Verarbeitung wird sobald wie möglich automatisch nachgeholt."
-            )
+            result = {
+                'errors': [
+                    "Der Lori-Server konnte nicht erreicht und die Eingabe demzufolge " \
+                    "nicht verarbeitet werden. Die Eingabe wurde aber aufgezeichnet " \
+                    "und die Verarbeitung wird sobald wie möglich automatisch nachgeholt.",
+                ],
+                'detail_info': network_error,
+            }
 
         if was_backlogged:
             # This is the reply to user input that was re-sent from the backlog.
