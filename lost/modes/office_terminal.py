@@ -13,6 +13,7 @@ class State(Enum):
 
 USER_INPUT_STATES = (
     State.WELCOME,
+    State.SYSTEM_PANEL,
 )
 
 

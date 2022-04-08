@@ -59,8 +59,7 @@ class RootWindow(Tk):
             self.bind('<F6>', lambda x: self.terminal.on_server_reply_received(messages_reply))
             self.bind('<F7>', lambda x: self.terminal.on_server_reply_received(errors_reply))
             self.bind('<F8>', lambda x: self.terminal.on_server_reply_received({}))
-            self.bind('<F9>', lambda x: self.main_con.simulate_smartcard_input('ABCD'))
-          # self.bind('<F10>', lambda x: self.main_con.simulate_server_reply())
+            self.bind('<F9>', lambda x: self.main_con.simulate_smartcard_input('Sonderkarte: Verbindungstest'))
             self.bind('<F12>', lambda x: self.terminal.set_state_system_panel())
 
         self.frame_Welcome = WelcomeFrame(self)

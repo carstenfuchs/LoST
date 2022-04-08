@@ -404,11 +404,12 @@ class SystemPanelFrame(Frame):
 
         self.rowconfigure(0, weight=0)               # title bar
         self.rowconfigure(1, weight=3, uniform='u')  # headline
-        self.rowconfigure(2, weight=2, uniform='u')  # quit program
-        self.rowconfigure(3, weight=2, uniform='u')  # system shutdown
-        self.rowconfigure(4, weight=1, uniform='u')  # vertical space
-        self.rowconfigure(5, weight=2, uniform='u')  # "back" button
-        self.rowconfigure(6, weight=1, uniform='u')  # vertical space
+        self.rowconfigure(2, weight=2, uniform='u')  # use special smartcard for testing the network connection
+        self.rowconfigure(3, weight=2, uniform='u')  # quit program
+        self.rowconfigure(4, weight=2, uniform='u')  # system shutdown
+        self.rowconfigure(5, weight=1, uniform='u')  # vertical space
+        self.rowconfigure(6, weight=2, uniform='u')  # "back" button
+        self.rowconfigure(7, weight=1, uniform='u')  # vertical space
 
         self.columnconfigure(0, weight=1, uniform='a')  # buttons
         self.columnconfigure(1, weight=1, uniform='a')  # system info text
@@ -419,23 +420,29 @@ class SystemPanelFrame(Frame):
         headline_label = Label(self, text="System", foreground='white', background=cp.get_bg_col(), anchor='w', font=fp.get_font(150))
         headline_label.grid(row=1, column=0, columnspan=2, sticky="NESW", padx=10)
 
-        quit_button = TouchButton(self, text="Programm beenden", anchor='w', command=self.on_click_quit_program)
+        quit_button = TouchButton(self, text="Verbindungstest", anchor='w', command=self.on_test_network_connection)
         quit_button.grid(row=2, column=0, sticky="NESW", padx=10)
+        quit_button = TouchButton(self, text="Programm beenden", anchor='w', command=self.on_click_quit_program)
+        quit_button.grid(row=3, column=0, sticky="NESW", padx=10)
         shut_button = TouchButton(self, text="System herunterfahren", anchor='w', command=self.on_click_shutdown)
-        shut_button.grid(row=3, column=0, sticky="NESW", padx=10)
+        shut_button.grid(row=4, column=0, sticky="NESW", padx=10)
         back_button = TouchButton(self, text="← zurück zum Terminal", anchor='w', command=self.on_click_back)
-        back_button.grid(row=5, column=0, sticky="NESW", padx=10)
+        back_button.grid(row=6, column=0, sticky="NESW", padx=10)
 
         # The `rowspan` below seems to adversely affect the `uniform='u'` above.
         # A bug in Tkinter?
         self.sysinfo_label = Label(self, text="", foreground='#FF7722', justify='left', anchor='n', background=cp.get_bg_col(), font=fp.get_font(70))
-        self.sysinfo_label.grid(row=2, rowspan=4, column=1, sticky="NESW", padx=(0, 10))
+        self.sysinfo_label.grid(row=2, rowspan=6, column=1, sticky="NESW", padx=(0, 10))
 
         self.time_updated = None
         self.update_system_info()
 
     def update_to_model(self, terminal):
         self.time_updated = time.time()
+
+    def on_test_network_connection(self):
+        logger.info("Using special smartcard for testing the network connection.")
+        self.winfo_toplevel().main_con.simulate_smartcard_input('Sonderkarte: Verbindungstest')
 
     def on_click_quit_program(self):
         logger.info("Quitting program.")
