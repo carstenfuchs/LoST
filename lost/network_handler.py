@@ -101,7 +101,7 @@ class NetworkHandler:
 
         user_input = {
             'smartcard_id': smartcard_id,
-            'local_ts': str(get_datetime_now()),  # local timestamp
+            'terminal_ts': str(get_datetime_now()),   # local timestamp
             'backlog_count': 0,
         }
 

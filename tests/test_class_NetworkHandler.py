@@ -16,7 +16,7 @@ class Test_post_stamp_event(BuiltinServerTestCase):
     def send_post(self):
         user_in={
             'smartcard_id': 'brand-new smartcard',
-            'local_ts': '2022-03-30 16:56:37.157814',
+            'terminal_ts': '2022-03-30 16:56:37.157814',
             'pause': None,
         }
 
@@ -176,7 +176,7 @@ class Test_NetworkHandler_sending(BuiltinServerTestCase):
             cm.output,
             [
                 "INFO:lost.network:send_to_Lori():",
-                "INFO:lost.network:    user_input = {'smartcard_id': 'brand-new smartcard', 'local_ts': '2022-04-02 18:12:00', 'backlog_count': 0, 'department': 'Test Labs', 'pause': 30}",
+                "INFO:lost.network:    user_input = {'smartcard_id': 'brand-new smartcard', 'terminal_ts': '2022-04-02 18:12:00', 'backlog_count': 0, 'department': 'Test Labs', 'pause': 30}",
             ],
         )
 
@@ -191,7 +191,7 @@ class Test_NetworkHandler_sending(BuiltinServerTestCase):
             {
                 # These were directly from `send_to_Lori()`.
                 'smartcard_id': "brand-new smartcard",
-                'local_ts': "2022-04-02 18:12:00",
+                'terminal_ts': "2022-04-02 18:12:00",
                 'backlog_count': 0,
                 # These were added by the terminal's `get_user_input()`.
                 'department': "Test Labs",
@@ -206,7 +206,7 @@ class Test_NetworkHandler_sending(BuiltinServerTestCase):
             {
                 # These were directly from `send_to_Lori()`.
                 'smartcard_id': "brand-new smartcard",
-                'local_ts': "2022-04-02 18:12:00",
+                'terminal_ts': "2022-04-02 18:12:00",
                 'backlog_count': "0",
                 # These were added by the terminal's `get_user_input()`.
                 'department': "Test Labs",
@@ -240,11 +240,11 @@ class Test_NetworkHandler_sending(BuiltinServerTestCase):
             cm.output,
             [
                 "INFO:lost.network:send_to_Lori():",
-                "INFO:lost.network:    user_input = {'smartcard_id': 'brand-new smartcard', 'local_ts': '2022-04-02 18:12:00', 'backlog_count': 0, 'department': 'Test Labs', 'pause': 30}",
+                "INFO:lost.network:    user_input = {'smartcard_id': 'brand-new smartcard', 'terminal_ts': '2022-04-02 18:12:00', 'backlog_count': 0, 'department': 'Test Labs', 'pause': 30}",
                 "ERROR:lost.network:send_to_Lori(): Throttling network transmissions, dropping smartcard_id = 'brand-new smartcard'!",
                 "ERROR:lost.network:    self.time_last_sending = 3, now = 3.4",
                 "INFO:lost.network:send_to_Lori():",
-                "INFO:lost.network:    user_input = {'smartcard_id': 'brand-new smartcard', 'local_ts': '2022-04-02 18:12:00.600000', 'backlog_count': 0, 'department': 'Test Labs', 'pause': 30}",
+                "INFO:lost.network:    user_input = {'smartcard_id': 'brand-new smartcard', 'terminal_ts': '2022-04-02 18:12:00.600000', 'backlog_count': 0, 'department': 'Test Labs', 'pause': 30}",
             ],
         )
 
