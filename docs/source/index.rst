@@ -3,6 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+
 Welcome to Lori Stempeluhr Terminal's documentation!
 ====================================================
 
@@ -11,10 +12,29 @@ Welcome to Lori Stempeluhr Terminal's documentation!
    :caption: Contents:
 
 
+Installation
+------------
 
-Indices and tables
-==================
+.. code-block:: console
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   $ cd ~
+   $ mkdir .virtualenvs
+   $ python3 -m venv ~/.virtualenvs/LoST
+   $ # The virtual env is activated below.
+   $ # source .virtualenvs/LoST/bin/activate
+
+   $ cd LoST/
+   $ ln -s ~/.virtualenvs/LoST/bin/activate
+   $ . activate
+   $ pip install wheel   # important for building pyscard in the next step!
+   $ pip install -r requirements.txt
+
+
+.. comment
+
+   Indices and tables
+   ==================
+
+   * :ref:`genindex`
+   * :ref:`modindex`
+   * :ref:`search`

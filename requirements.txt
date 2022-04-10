@@ -2,3 +2,4 @@ Babel==2.9.1
 pyscard==2.0.2
 requests==2.27.1
 Sphinx==4.5.0
+sphinx-book-theme==0.3.2

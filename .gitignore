@@ -1,5 +1,6 @@
 /activate
 /backlog.db
+/docs/build/
 /lost/settings.py
 /lost.log
 
