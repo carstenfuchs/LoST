@@ -55,6 +55,7 @@ exclude_patterns = []
 #
 #   - Furo
 #   - Piccolo
+#   - Insipid (https://insipid-sphinx-theme.readthedocs.io)
 #   - Book Theme (https://sphinx-book-theme.readthedocs.io)
 #   - Material
 #

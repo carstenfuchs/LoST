@@ -7,27 +7,18 @@
 Welcome to Lori Stempeluhr Terminal's documentation!
 ====================================================
 
+Willkommen zur Dokumentation von **LoST** – den Lori Stempeluhr Terminals.
+
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Inhaltsverzeichnis
 
-
-Installation
-------------
-
-.. code-block:: console
-
-   $ cd ~
-   $ mkdir .virtualenvs
-   $ python3 -m venv ~/.virtualenvs/LoST
-   $ # The virtual env is activated below.
-   $ # source .virtualenvs/LoST/bin/activate
-
-   $ cd LoST/
-   $ ln -s ~/.virtualenvs/LoST/bin/activate
-   $ . activate
-   $ pip install wheel   # important for building pyscard in the next step!
-   $ pip install -r requirements.txt
+   introduction
+   raspberry-pi
+   smartcard-reader
+   lost-app
+   appendix
 
 
 .. comment
