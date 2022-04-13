@@ -19,8 +19,10 @@ class RootWindow(Tk):
 
         # The native resolution of the official Raspberry Pi Touch Display
         # (https://www.raspberrypi.com/products/raspberry-pi-touch-display/)
-        # is 800 x 480 pixels, so let's pick that as the default size.
-        self.geometry("800x480")
+        # is 800 x 480 pixels. Still, let's pick something smaller as the
+        # default size so that dragging the window with the mouse is easier.
+        self.geometry("640x384")
+        self.attributes("-fullscreen", True)
 
         if True:  # if localconfig.DEBUG:
             success_reply = {
@@ -62,6 +64,7 @@ class RootWindow(Tk):
             self.bind('<F7>', lambda x: self.terminal.on_server_reply_received(errors_reply))
             self.bind('<F8>', lambda x: self.terminal.on_server_reply_received({}))
             self.bind('<F9>', lambda x: self.main_con.simulate_smartcard_input('Sonderkarte: Verbindungstest'))
+            self.bind('<F11>', lambda x: self.attributes("-fullscreen", not self.attributes("-fullscreen")))
             self.bind('<F12>', lambda x: self.terminal.set_state_system_panel())
 
         self.frame_Welcome = WelcomeFrame(self)
