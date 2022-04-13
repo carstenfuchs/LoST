@@ -57,6 +57,7 @@ exclude_patterns = []
 #   - Piccolo
 #   - Insipid (https://insipid-sphinx-theme.readthedocs.io)
 #   - Book Theme (https://sphinx-book-theme.readthedocs.io)
+#   - PyData (https://pydata-sphinx-theme.readthedocs.io)
 #   - Material
 #
 html_theme = 'sphinx_book_theme'
