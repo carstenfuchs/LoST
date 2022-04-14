@@ -1,5 +1,5 @@
 from enum import Enum
-import time
+from lost.common import get_time_time
 from lost.modes.base_terminal import BaseTerminal
 
 
@@ -28,16 +28,17 @@ class Terminal(BaseTerminal):
     def __init__(self):
         super().__init__()
         self._set_state(State.WELCOME)
-        self.time_last_action = time.time()
 
     def _set_state(self, state):
         self.state = state
         self.sow_type = None
         self.department = None
         self.pause = None
+        self.time_last_action = get_time_time()
         self.last_server_reply = None
 
     def get_user_input(self):
+        # Overrides the method in the parent class.
         return {
             'department': self.department,
             'pause': self.pause,
@@ -45,44 +46,35 @@ class Terminal(BaseTerminal):
 
     def set_state(self, state):
         # This function is only to be called from the touch screen GUI.
-        # TODO: This is not quite true – also the smartcard reader is a kind of GUI!
         if state in USER_INPUT_STATES:
             self._set_state(state)
-            self.time_last_action = time.time()
             self.notify_observers()
 
     def set_state_welcome(self):
+        # Overrides the method in the parent class.
         self._set_state(State.WELCOME)
-        self.time_last_action = time.time()
         self.notify_observers()
 
     def set_state_system_panel(self):
+        # Overrides the method in the parent class.
         self._set_state(State.SYSTEM_PANEL)
-        self.time_last_action = time.time()
         self.notify_observers()
 
     def set_sow_type(self, sow):
         assert sow in (None, 'schicht', 'jetzt')
-        self.sow_type  = sow
-        self.time_last_action = time.time()
+        self.sow_type = sow
+        self.time_last_action = get_time_time()
         self.notify_observers()
 
     def set_department(self, dept):
         self.department = dept
-        self.time_last_action = time.time()
+        self.time_last_action = get_time_time()
         self.notify_observers()
 
     def set_pause(self, pause):
         self.pause = pause
-        self.time_last_action = time.time()
+        self.time_last_action = get_time_time()
         self.notify_observers()
-
-    def process_clocktick(self):
-        time_idle = time.time() - self.time_last_action
-        if time_idle > 30.0:
-            self._set_state(State.WELCOME)
-            self.time_last_action = time.time()
-            self.notify_observers()
 
     def is_expecting_smartcard(self):
         # Overrides the method in the parent class.
@@ -96,5 +88,11 @@ class Terminal(BaseTerminal):
         # Overrides the method in the parent class.
         self._set_state(State.DISPLAY_SERVER_REPLY)
         self.last_server_reply = reply
-        self.time_last_action = time.time()
         self.notify_observers()
+
+    def on_clock_tick(self):
+        # Overrides the method in the parent class.
+        time_idle = get_time_time() - self.time_last_action
+        if time_idle > 30.0:
+            self._set_state(State.WELCOME)
+            self.notify_observers()

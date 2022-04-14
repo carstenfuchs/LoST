@@ -46,7 +46,6 @@ class MainConnector:
 
     def __init__(self):
         self.sc_mon = None
-        self.nw_handler = None
 
     def _check_thread_queue(self):
         """

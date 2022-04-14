@@ -73,6 +73,7 @@ class RootWindow(Tk):
 
         self.bind('<Configure>', self.on_resize)
         self.drive_main_connector()
+        self.drive_terminal_clock()
 
     def on_resize(self, event):
         if event.widget == self:
@@ -89,6 +90,11 @@ class RootWindow(Tk):
         """
         self.main_con.on_clock_tick()
         self.after(100, self.drive_main_connector)
+
+    def drive_terminal_clock(self):
+        if self.terminal is not None:
+            self.terminal.on_clock_tick()
+        self.after(500, self.drive_terminal_clock)
 
     def update_to_model(self, terminal):
         next_frame = self.frame_Welcome

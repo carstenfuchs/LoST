@@ -61,3 +61,7 @@ class BaseTerminal:
     def on_server_reply_received(self, reply):
         # Child classes are expected to override this method!
         pass
+
+    def on_clock_tick(self):
+        # Child classes are expected to override this method!
+        pass

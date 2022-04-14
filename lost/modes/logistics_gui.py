@@ -97,7 +97,7 @@ class RootWindow(Tk):
 
     def drive_terminal_clock(self):
         if self.terminal is not None:
-            self.terminal.process_clocktick()
+            self.terminal.on_clock_tick()
         self.after(500, self.drive_terminal_clock)
 
     def update_to_model(self, terminal):
