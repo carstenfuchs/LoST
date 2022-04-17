@@ -1,0 +1,27 @@
+# For an introduction, see:
+# https://www.digitalocean.com/community/tutorials/understanding-systemd-units-and-unit-files
+#
+# For details, see the systemd.service man page:
+# https://www.freedesktop.org/software/systemd/man/systemd.service.html
+
+[Unit]
+Description=Lori Stempeluhr Terminal Application
+After=multi-user.target
+Requires=network.target
+
+[Service]
+Type=simple
+User=pi
+Restart=on-failure
+RestartSec=30
+
+WorkingDirectory=/home/pi/LoST
+
+# https://stackoverflow.com/questions/37211115/how-to-enable-a-virtualenv-in-a-systemd-service-unit
+ExecStart=/home/pi/.virtualenvs/LoST/bin/python lost.py
+
+# Have stdout shown in the logs immediately.
+Environment=LANG=de_DE.UTF-8 PYTHONUNBUFFERED=1 DISPLAY=:0
+
+[Install]
+WantedBy=multi-user.target
