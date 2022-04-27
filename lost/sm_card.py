@@ -28,11 +28,17 @@ class SmartcardMonitor:
         This function is called when a smartcard has been read by the `LoSTCardObserver`.
         It is a callback that runs in the program's main thread.
         """
+        if not success:
+            # Success or failure is already logged in the caller.
+            return
+
         if not self.terminal.is_expecting_smartcard():
             return
 
         # Send the smartcard details in a POST request to the server.
-        self.network_handler.send_to_Lori(response)
+        smartcard_id = toHexString(response)
+
+        self.network_handler.send_to_Lori(smartcard_id)
         self.terminal.on_server_post_sent()
 
 
@@ -79,7 +85,10 @@ class LoSTCardObserver(CardObserver):
             card.connection.disconnect()
 
             success = sw1 in (0x90, 0x61)
-            logger.info(f'[💳] read card UID: status 0x{sw1:02x} 0x{sw2:02x}, result "{toHexString(response)}"')
+            logger.log(
+                logging.INFO if success else logging.WARNING,
+                f'[💳] read card UID: status 0x{sw1:02x} 0x{sw2:02x}, result "{toHexString(response)}"',
+            )
 
             # We are running in a worker thread of the `CardMonitor` here.
             # Thus, put the callback and the results into the queue, to be
