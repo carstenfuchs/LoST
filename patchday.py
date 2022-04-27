@@ -50,7 +50,9 @@ if __name__ == "__main__":
         print(Warn("\nNo virtualenv seems to be active.\n"))
         sys.exit()
 
-    print("\nGit repository not updated automatically, please fetch and merge manually.")
+    run(["git", "fetch", "--all"])
+    run(["git", "merge", "--ff-only"])
+
     run(["pip", "install", "-q", "-r", "requirements.txt"])
     # run(["python", "bookmaker.py", "--pdf"])
 
@@ -72,6 +74,13 @@ if __name__ == "__main__":
     run(["timedatectl", "show", "--property", "NTP",             "--value"], output_callback=output_callback_check_yes, quiet=True)
     run(["timedatectl", "show", "--property", "NTPSynchronized", "--value"], output_callback=output_callback_check_yes, quiet=True)
 
+    # Restart LoST.
+    if subprocess.run(["systemctl", "is-active", "lost"]).returncode == 0:
+        run(["systemctl", "status", "lost"])
+        run(["systemctl", "restart", "lost"])
+        run(["systemctl", "status", "lost"])
+    else:
+        print("\nThe LoST system service is not running.")
+
     # Run all tests:
-    # python -Wall -Werror manage.py test --keepdb --failfast
     print("All done.\n")
