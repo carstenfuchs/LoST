@@ -70,6 +70,10 @@ if __name__ == "__main__":
     #             dirs.remove(excl)
 
     # Make sure that the clock is properly synchronized.
+    # See the installation manual for additional information.
+    # For manual testing, use:
+    # $ timedatectl
+    # $ timedatectl timesync-status
     run(["timedatectl", "show", "--property", "CanNTP",          "--value"], output_callback=output_callback_check_yes, quiet=True)
     run(["timedatectl", "show", "--property", "NTP",             "--value"], output_callback=output_callback_check_yes, quiet=True)
     run(["timedatectl", "show", "--property", "NTPSynchronized", "--value"], output_callback=output_callback_check_yes, quiet=True)
